@@ -1,0 +1,23 @@
+name: cryoforge
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - xarray
+  - xstac
+  - dask
+  - distributed
+  - earthaccess
+  - virtualizarr
+  - kerchunk
+  - jupyterlab
+  - rioxarray
+  - pyproj
+  - h5netcdf
+  - pystac
+  - geojson
+  - shapely
+  - pytest
+  - coiled
+  - pip
+  - pip:

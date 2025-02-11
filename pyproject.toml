@@ -1,0 +1,71 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cryoforge"
+version = "0.1.0"
+description = "Metadata genrator for ITS_LIVE velocity scenes"
+authors = [{name = "Luis Lopez", email = "betolin@gmail.com"}]
+maintainers = [
+  {name = "Luis Lopez", email="betolin@gmail.com"},
+]
+readme = "README.md"
+license = { text = "MIT" }
+classifiers = [
+    "Environment :: Console",
+    "Framework :: IPython",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development",
+    "License :: OSI Approved :: MIT License",
+]
+
+requires-python = ">=3.10"
+
+dependencies = [
+  "xarray >= 2024.11",
+  "xstac >= 0.1.0",
+  "dask >= 2024.11",
+  "distributed >= 2024.11",
+  "earthaccess >= 0.12.0",
+  "virtualizarr >= 0.1.0",
+  "kerchunk >= 0.2.6",
+  "h5netcdf >= 1.5.0",
+  "pystac >= 1.12.0",
+  "pqdm >=0.1",
+  "s3fs >=2022.11",
+  "fsspec >=2022.11",
+  "shapely",
+  "geojson",
+  "zarr <=3.0.0a",
+]
+
+[project.scripts]
+metagen = "cryoforge.generate:main"
+
+[project.optional-dependencies]
+
+dev = [
+  "bump-my-version >=0.10.0",
+  "pytest",
+  "jupyterlab >=3.0",
+  "dask-labextension",
+  "ruff >=0.6.3",
+  "uv >=0.4.7",
+]
+test = [
+  "zarr >=2.12.0, <3.0.0a",
+  "numpy >=1.26.4",
+  "pytest >=8.3",
+  "pytest-watch >=4.2",
+  "python-magic >=0.4",
+  "responses >=0.14",
+]

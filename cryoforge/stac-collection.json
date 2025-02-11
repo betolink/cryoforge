@@ -1,0 +1,48 @@
+{
+    "id": "its-live-landsat-velocity",
+    "stac_version": "1.1.0",
+    "description": "ITS_LIVE Global Landsat Velocity Image Pairs",
+    "stac_extensions": [
+        "https://stac-extensions.github.io/eo/v2.0.0/schema.json",
+        "https://stac-extensions.github.io/projection/v1.1.0/schema.json"
+    ],
+    "title": "ITS_LIVE Landsat Velocity Dataset",
+    "license": "CC-BY-4.0",
+    "keywords": [
+        "ice velocity",
+        "landsat",
+        "remote sensing",
+        "climate change"
+    ],
+    "providers": [
+        {
+            "name": "NASA MEaSUREs ITS_LIVE",
+            "roles": ["producer", "licensor"],
+            "url": "https://its-live.jpl.nasa.gov/"
+        }
+    ],
+    "extent": {
+        "spatial": {
+            "bbox": [[-180, -90, 180, 90]]
+        },
+        "temporal": {
+            "interval": [["1984-01-01T00:00:00Z", "2022-12-31T23:59:59Z"]]
+        }
+    },
+    "summaries": {
+        "eo:bands": [
+            {
+                "name": "velocity",
+                "description": "Ice velocity measurement"
+            }
+        ],
+        "proj:code": ["EPSG:3413", "EPSG:4326"]
+    },
+    "links": [
+        {
+            "rel": "root",
+            "href": "./collection.json",
+            "type": "application/json"
+        }
+    ]
+}
