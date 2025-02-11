@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cryoforge"
-version = "0.1.1"
+version = "0.1.2"
 description = "Metadata genrator for ITS_LIVE velocity scenes"
 authors = [{name = "Luis Lopez", email = "betolin@gmail.com"}]
 maintainers = [
