@@ -38,6 +38,7 @@ DATE_TIME_FORMAT = "%Y%m%dT%H%M%S"
 _NUM_AWS_COPY_RETRIES = 3
 _AWS_COPY_SLEEP_SECONDS = 3
 
+
 def generate_nsidc_metadata_files(ds, filename, version):
     """
     Example of premet file:
@@ -56,7 +57,7 @@ def generate_nsidc_metadata_files(ds, filename, version):
     AssociatedPlatformShortName=LANDSAT-8
     AssociatedInstrumentShortName=TIRS
     AssociatedSensorShortName=TIRS
-    
+
     Example of spatial file:
     ========================
     -94.32	71.86
@@ -67,60 +68,58 @@ def generate_nsidc_metadata_files(ds, filename, version):
 
     # Dictionary of metadata values based on the mission+sensor token
     # Optical data:
-    LC9 = 'LC09'
-    LO9 = 'LO09'
-    LC8 = 'LC08'
-    LO8 = 'LO08'
-    L7 = 'LE07'
-    L5 = 'LT05'
-    L4 = 'LT04'
-    S2A = 'S2A'
-    S2B = 'S2B'
-    
+    LC9 = "LC09"
+    LO9 = "LO09"
+    LC8 = "LC08"
+    LO8 = "LO08"
+    L7 = "LE07"
+    L5 = "LT05"
+    L4 = "LT04"
+    S2A = "S2A"
+    S2B = "S2B"
+
     # Radar data:
-    S1A = 'S1A'
-    S1B = 'S1B'
-    
-    PlatformSensor = collections.namedtuple("PM", ['platform', 'sensor'])
-    
-    
+    S1A = "S1A"
+    S1B = "S1B"
+
+    PlatformSensor = collections.namedtuple("PM", ["platform", "sensor"])
+
     short_names = {
-      LC9: PlatformSensor('LANDSAT-9', 'OLI'),
-      LO9: PlatformSensor('LANDSAT-9', 'OLI'),
-      LC8: PlatformSensor('LANDSAT-8', 'OLI'),
-      LO8: PlatformSensor('LANDSAT-8', 'OLI'),
-      L7: PlatformSensor('LANDSAT-7', 'ETM+'),
-      L5: PlatformSensor('LANDSAT-5', 'TM'),
-      L4: PlatformSensor('LANDSAT-4', 'TM'),
-      S1A: PlatformSensor('SENTINEL-1', 'Sentinel-1A'),
-      S1B: PlatformSensor('SENTINEL-1', 'Sentinel-1B'),
-      S2A: PlatformSensor('SENTINEL-2', 'Sentinel-2A'),
-      S2B: PlatformSensor('SENTINEL-2', 'Sentinel-2B')
+        LC9: PlatformSensor("LANDSAT-9", "OLI"),
+        LO9: PlatformSensor("LANDSAT-9", "OLI"),
+        LC8: PlatformSensor("LANDSAT-8", "OLI"),
+        LO8: PlatformSensor("LANDSAT-8", "OLI"),
+        L7: PlatformSensor("LANDSAT-7", "ETM+"),
+        L5: PlatformSensor("LANDSAT-5", "TM"),
+        L4: PlatformSensor("LANDSAT-4", "TM"),
+        S1A: PlatformSensor("SENTINEL-1", "Sentinel-1A"),
+        S1B: PlatformSensor("SENTINEL-1", "Sentinel-1B"),
+        S2A: PlatformSensor("SENTINEL-2", "Sentinel-2A"),
+        S2B: PlatformSensor("SENTINEL-2", "Sentinel-2B"),
     }
-    
 
     def get_sensor_tokens_from_filename(filename: str):
-       """
-       Extract sensor tokens for two images from the granule
-       filename. The filename is expected to have the following format:
-       <image1_tokens>_X_<image2_tokens>_<granule_tokens>.nc.
-       """
-       #  url_files = os.path.basename(filename).split('_X_')
-       url_files = Path(filename).name.split('_X_')
-    
-       # Get tokens for the first image
-       url_tokens_1 = url_files[0].split('_')
-    
-       # Extract info from second part of the granule's filename: corresponds to the second image
-       url_tokens_2 = url_files[1].split('_')
-    
-       # Return sensor tokens for both images
-       return (url_tokens_1[0], url_tokens_2[0])    
+        """
+        Extract sensor tokens for two images from the granule
+        filename. The filename is expected to have the following format:
+        <image1_tokens>_X_<image2_tokens>_<granule_tokens>.nc.
+        """
+        #  url_files = os.path.basename(filename).split('_X_')
+        url_files = Path(filename).name.split("_X_")
+
+        # Get tokens for the first image
+        url_tokens_1 = url_files[0].split("_")
+
+        # Extract info from second part of the granule's filename: corresponds to the second image
+        url_tokens_2 = url_files[1].split("_")
+
+        # Return sensor tokens for both images
+        return (url_tokens_1[0], url_tokens_2[0])
 
     def create_premet_file(ds: xr.Dataset, infile: str, version: str):
         """
         Create premet file that corresponds to the input image pair velocity granule.
-        
+
         Inputs
         ======
         ds: xarray.Dataset object that represents the granule.
@@ -128,24 +127,28 @@ def generate_nsidc_metadata_files(ds, filename, version):
         """
         # Extract tokens from the filename
         sensor1, sensor2 = get_sensor_tokens_from_filename(infile)
-        
+
         if sensor1 not in short_names:
-         raise RuntimeError(
-            f'create_premet_file(): got unexpected mission+sensor '
-            f'{sensor1} for image#1 of {infile}: one of '
-            f'{list(short_names.keys())} is supported.'
-         )
-        
+            raise RuntimeError(
+                f"create_premet_file(): got unexpected mission+sensor "
+                f"{sensor1} for image#1 of {infile}: one of "
+                f"{list(short_names.keys())} is supported."
+            )
+
         if sensor2 not in short_names:
-         raise RuntimeError(
-            f'create_premet_file() got unexpected mission+sensor '
-            f'{sensor2} for image#2 of {infile}: one of '
-            f'{list(short_names.keys())} is supported.'
-         )
-        
+            raise RuntimeError(
+                f"create_premet_file() got unexpected mission+sensor "
+                f"{sensor2} for image#2 of {infile}: one of "
+                f"{list(short_names.keys())} is supported."
+            )
+
         # Get acquisition dates for both images
-        begin_date = pd.to_datetime(ds["img_pair_info"].acquisition_date_img1).strftime("%Y-%m-%d")
-        end_date = pd.to_datetime(ds["img_pair_info"].acquisition_date_img2).strftime("%Y-%m-%d")
+        begin_date = pd.to_datetime(ds["img_pair_info"].acquisition_date_img1).strftime(
+            "%Y-%m-%d"
+        )
+        end_date = pd.to_datetime(ds["img_pair_info"].acquisition_date_img2).strftime(
+            "%Y-%m-%d"
+        )
 
         file_content = f"""
         FileName={infile}
@@ -155,22 +158,26 @@ def generate_nsidc_metadata_files(ds, filename, version):
         Begin_time=00:00:01.000
         End_time=23:59:59.000
         """
-        
-         # Append premet with sensor info
+
+        # Append premet with sensor info
         for sensor in [sensor1, sensor2]:
-            file_content =  file_content + f"""Container=AssociatedPlatformInstrumentSensor
+            file_content = (
+                file_content
+                + f"""Container=AssociatedPlatformInstrumentSensor
             AssociatedPlatformShortName={short_names[sensor].platform}
             AssociatedInstrumentShortName={short_names[sensor].sensor}
             AssociatedSensorShortName={short_names[sensor].sensor}
             """
+            )
         return file_content
+
     return create_premet_file(ds, filename, version)
 
 
 def get_geom(ds, precision, projection):
     """
     Extracts a polygon from an ITS_LIVE xarray dataset using available projection metadata.
-    
+
     Returns:
         shapely.Polygon object if found, otherwise None.
     """
@@ -191,21 +198,40 @@ def get_geom(ds, precision, projection):
     transformer = Transformer.from_crs(crs, CRS.from_epsg(projection), always_xy=True)
     xvals = ds["x"].values
     yvals = ds["y"].values
-    minval_x, pix_size_x, rot_x_ignored, maxval_y, rot_y_ignored, pix_size_y = [float(x) for x in projection_cf.attrs['GeoTransform'].split()]
-    
-    # NOTE: these are pixel center values, need to modify by half the grid size to get bounding box/geotransform values
-    projection_cf_minx = xvals[0] - pix_size_x/2.0
-    projection_cf_maxx = xvals[-1] + pix_size_x/2.0
-    projection_cf_miny = yvals[-1] + pix_size_y/2.0  # pix_size_y is negative!
-    projection_cf_maxy = yvals[0] - pix_size_y/2.0   # pix_size_y is negative!
+    minval_x, pix_size_x, rot_x_ignored, maxval_y, rot_y_ignored, pix_size_y = [
+        float(x) for x in projection_cf.attrs["GeoTransform"].split()
+    ]
 
-    ll_lonlat = np.round(transformer.transform(projection_cf_minx, projection_cf_miny), decimals=precision).tolist()
-    lr_lonlat = np.round(transformer.transform(projection_cf_maxx, projection_cf_miny), decimals=precision).tolist()
-    ur_lonlat = np.round(transformer.transform(projection_cf_maxx, projection_cf_maxy), decimals=precision).tolist()
-    ul_lonlat = np.round(transformer.transform(projection_cf_minx, projection_cf_maxy), decimals=precision).tolist()
+    # NOTE: these are pixel center values, need to modify by half the grid size to get bounding box/geotransform values
+    projection_cf_minx = xvals[0] - pix_size_x / 2.0
+    projection_cf_maxx = xvals[-1] + pix_size_x / 2.0
+    projection_cf_miny = yvals[-1] + pix_size_y / 2.0  # pix_size_y is negative!
+    projection_cf_maxy = yvals[0] - pix_size_y / 2.0  # pix_size_y is negative!
+
+    ll_lonlat = np.round(
+        transformer.transform(projection_cf_minx, projection_cf_miny),
+        decimals=precision,
+    ).tolist()
+    lr_lonlat = np.round(
+        transformer.transform(projection_cf_maxx, projection_cf_miny),
+        decimals=precision,
+    ).tolist()
+    ur_lonlat = np.round(
+        transformer.transform(projection_cf_maxx, projection_cf_maxy),
+        decimals=precision,
+    ).tolist()
+    ul_lonlat = np.round(
+        transformer.transform(projection_cf_minx, projection_cf_maxy),
+        decimals=precision,
+    ).tolist()
 
     # find center lon lat for inclusion in feature (to determine lon lat grid cell directory)
-    center_lonlat = np.round(transformer.transform((xvals[0] + xvals[-1])/2.0, (yvals[0] + yvals[-1])/2.0), decimals=4).tolist()
+    center_lonlat = np.round(
+        transformer.transform(
+            (xvals[0] + xvals[-1]) / 2.0, (yvals[0] + yvals[-1]) / 2.0
+        ),
+        decimals=4,
+    ).tolist()
 
     fracs = [0.25, 0.5, 0.75]
     polylist = []  # ring in counterclockwise order
@@ -214,35 +240,63 @@ def get_geom(ds, precision, projection):
     dx = projection_cf_maxx - projection_cf_minx
     dy = projection_cf_miny - projection_cf_miny
     for frac in fracs:
-        polylist.append(np.round(transformer.transform(projection_cf_minx + (frac * dx), projection_cf_miny + (frac * dy)), decimals=precision).tolist())
+        polylist.append(
+            np.round(
+                transformer.transform(
+                    projection_cf_minx + (frac * dx), projection_cf_miny + (frac * dy)
+                ),
+                decimals=precision,
+            ).tolist()
+        )
 
     polylist.append(lr_lonlat)
     dx = projection_cf_maxx - projection_cf_maxx
     dy = projection_cf_maxy - projection_cf_miny
     for frac in fracs:
-        polylist.append(np.round(transformer.transform(projection_cf_maxx + (frac * dx), projection_cf_miny + (frac * dy)), decimals=precision).tolist())
+        polylist.append(
+            np.round(
+                transformer.transform(
+                    projection_cf_maxx + (frac * dx), projection_cf_miny + (frac * dy)
+                ),
+                decimals=precision,
+            ).tolist()
+        )
 
     polylist.append(ur_lonlat)
     dx = projection_cf_minx - projection_cf_maxx
     dy = projection_cf_maxy - projection_cf_maxy
     for frac in fracs:
-        polylist.append(np.round(transformer.transform(projection_cf_maxx + (frac * dx), projection_cf_maxy + (frac * dy)), decimals=precision).tolist())
+        polylist.append(
+            np.round(
+                transformer.transform(
+                    projection_cf_maxx + (frac * dx), projection_cf_maxy + (frac * dy)
+                ),
+                decimals=precision,
+            ).tolist()
+        )
 
     polylist.append(ul_lonlat)
     dx = projection_cf_minx - projection_cf_minx
     dy = projection_cf_miny - projection_cf_maxy
     for frac in fracs:
-        polylist.append(np.round(transformer.transform(projection_cf_minx + (frac * dx), projection_cf_maxy + (frac * dy)), decimals=precision).tolist())
+        polylist.append(
+            np.round(
+                transformer.transform(
+                    projection_cf_minx + (frac * dx), projection_cf_maxy + (frac * dy)
+                ),
+                decimals=precision,
+            ).tolist()
+        )
 
     polylist.append(ll_lonlat)
     poly = Polygon(polylist)
-    spatial_epsg = projection_cf.attrs['spatial_epsg']
+    spatial_epsg = projection_cf.attrs["spatial_epsg"]
     return {
-        "polygon": poly, 
+        "polygon": poly,
         "bbox": list(poly.boundary.bounds),
         "center": center_lonlat,
         "epsg": spatial_epsg,
-        "corners": [ul_lonlat, ur_lonlat, lr_lonlat, ll_lonlat]
+        "corners": [ul_lonlat, ur_lonlat, lr_lonlat, ll_lonlat],
     }
 
 
@@ -257,10 +311,12 @@ def open_netcdf(url):
         so = {}
 
     # Open the file with fsspec
-    with fsspec.open(url, mode="rb", **so) as f: # type: ignore
+    with fsspec.open(url, mode="rb", **so) as f:  # type: ignore
         file_content = io.BytesIO(f.read())  # type: ignore
-        h5chunks = kerchunk.hdf.SingleHdf5ToZarr(file_content, url=url, inline_threshold=100)
-        
+        h5chunks = kerchunk.hdf.SingleHdf5ToZarr(
+            file_content, url=url, inline_threshold=100
+        )
+
     # Open dataset from memory
     ds = xr.open_dataset(file_content, engine="h5netcdf")
     return ds, h5chunks.translate()
@@ -269,25 +325,31 @@ def open_netcdf(url):
 def create_stac_item(ds, geom, url):
     """Create STAC item from dataset and geometry."""
     # Extract basic properties
-    start_date = pd.to_datetime(ds["img_pair_info"].acquisition_date_img1).tz_localize("UTC")
-    end_date = pd.to_datetime(ds["img_pair_info"].acquisition_date_img2).tz_localize("UTC")
+    start_date = pd.to_datetime(ds["img_pair_info"].acquisition_date_img1).tz_localize(
+        "UTC"
+    )
+    end_date = pd.to_datetime(ds["img_pair_info"].acquisition_date_img2).tz_localize(
+        "UTC"
+    )
     mid_date = pd.to_datetime(ds["img_pair_info"].date_center).tz_localize("UTC")
-    
+
     filename = url.split("/")[-1]
     mission = ds["img_pair_info"].id_img1.split("_")[0]
     version = int(url.split("/")[-3].replace("v", ""))
-    
+
     # Create STAC item
     item = pystac.Item(
         id=filename,
         stac_extensions=[
             "https://stac-extensions.github.io/projection/v2.0.0/schema.json",
             "https://stac-extensions.github.io/alternate-assets/v1.2.0/schema.json",
-            "https://stac-extensions.github.io/version/v1.2.0/schema.json"
+            "https://stac-extensions.github.io/version/v1.2.0/schema.json",
         ],
         geometry={
             "type": "Polygon",
-            "coordinates": geojson.Feature(geometry=geom["polygon"])["geometry"]["coordinates"],
+            "coordinates": geojson.Feature(geometry=geom["polygon"])["geometry"][
+                "coordinates"
+            ],
         },
         bbox=geom["bbox"],
         datetime=mid_date,
@@ -298,23 +360,25 @@ def create_stac_item(ds, geom, url):
             "platform": mission,
             "start_datetime": str(start_date),
             "end_datetime": str(end_date),
-            "percent_valid_pix": int(round(float(ds["img_pair_info"].roi_valid_percentage), 0)),
+            "percent_valid_pix": int(
+                round(float(ds["img_pair_info"].roi_valid_percentage), 0)
+            ),
             "proj:code": f"EPSG:{geom['epsg']}",
-            "version": str(version)
-        }
+            "version": str(version),
+        },
     )
-    
+
     # Add assets
     for key, ext, media_type in [
         ("overview", ".png", pystac.MediaType.PNG),
         ("data", ".nc", pystac.MediaType.NETCDF),
-        ("virtualzarr", ".ref.json", pystac.MediaType.JSON)
+        ("virtualzarr", ".ref.json", pystac.MediaType.JSON),
     ]:
         s3_url = url.replace(".s3.amazonaws.com", "").replace("https", "s3")
         if key == "virtualzarr":
             url = url.replace(".nc", ext)
             s3_url = s3_url.replace(".nc", ".ref.json")
-        
+
         item.add_asset(
             key=key,
             asset=pystac.Asset(
@@ -322,24 +386,22 @@ def create_stac_item(ds, geom, url):
                 media_type=media_type,
                 roles=["overview" if key == "overview" else "data"],
                 extra_fields={
-                    "alternate": {
-                        "s3": {
-                            "href": s3_url,
-                            "alternate:name": "S3"
-                        }
-                    }
-                }
-            )
+                    "alternate": {"s3": {"href": s3_url, "alternate:name": "S3"}}
+                },
+            ),
         )
-    
+
     return item
+
 
 def generate_itslive_metadata(url):
     original_ds, kerchunks = open_netcdf(url)
     if original_ds is None:
         raise ValueError(f"Could not open {url}")
 
-    original_ds.coords["time"] = pd.to_datetime(original_ds["img_pair_info"].date_center)
+    original_ds.coords["time"] = pd.to_datetime(
+        original_ds["img_pair_info"].date_center
+    )
     ds = original_ds.expand_dims(dim="time", axis=0)
     geom = get_geom(ds, precision=4, projection=4326)
     if geom is None:
@@ -348,15 +410,18 @@ def generate_itslive_metadata(url):
     item = create_stac_item(ds, geom, url)
     item.validate()
     nsidc_meta = generate_nsidc_metadata_files(ds, item.id, item.properties["version"])
-    nsidc_spatial = "\n".join([f"{round(coord[0],2)}\t{round(coord[1],2)}" for coord in geom["corners"]])
+    nsidc_spatial = "\n".join(
+        [f"{round(coord[0],2)}\t{round(coord[1],2)}" for coord in geom["corners"]]
+    )
     return {
         "ds": ds,
         "url": url,
         "stac": item,
         "kerchunk": kerchunks,
         "nsidc_meta": nsidc_meta.strip().replace(" ", ""),
-        "nsidc_spatial": nsidc_spatial 
+        "nsidc_spatial": nsidc_spatial,
     }
+
 
 def save_metadata(metadata: dict, outdir: str = "."):
     """Save STAC item to filesystem or S3"""
@@ -366,51 +431,53 @@ def save_metadata(metadata: dict, outdir: str = "."):
     else:
         stac_path = Path(outdir)
         granule_path = Path(outdir)
-            
+
     fs = fsspec.filesystem(outdir.split("://")[0] if "://" in outdir else "file")
 
     # save stac item
-    with fs.open(stac_path / Path(metadata["stac"].id.replace(".nc", ".json")), "w") as f:
+    with fs.open(
+        stac_path / Path(metadata["stac"].id.replace(".nc", ".json")), "w"
+    ) as f:
         json.dump(metadata["stac"].to_dict(), f, indent=2)
 
-
-    with fs.open(granule_path / Path(metadata["stac"].id.replace(".nc", ".premet")), "w") as f:
+    with fs.open(
+        granule_path / Path(metadata["stac"].id.replace(".nc", ".premet")), "w"
+    ) as f:
         f.write(metadata["nsidc_meta"])
 
-    with fs.open(granule_path / Path(metadata["stac"].id.replace(".nc", ".spatial")), "w") as f:
+    with fs.open(
+        granule_path / Path(metadata["stac"].id.replace(".nc", ".spatial")), "w"
+    ) as f:
         f.write(metadata["nsidc_spatial"])
 
-    with fs.open(granule_path / Path(metadata["stac"].id.replace(".nc", ".ref.json")), "w") as f:
+    with fs.open(
+        granule_path / Path(metadata["stac"].id.replace(".nc", ".ref.json")), "w"
+    ) as f:
         json.dump(metadata["kerchunk"], f, indent=2)
 
 
-
-
-def main(url: str, outdir: str):
-
-    logging.basicConfig(
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        datefmt='%m/%d/%Y %I:%M:%S %p',
-        level=logging.INFO
-    )
-
-    logging.info(f'Processing {url}')
-    metadata = generate_itslive_metadata(url)
-    save_metadata(metadata, outdir)
-    logging.info(f'Done processing {url}')
-
-
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(
         description="Generate metadata sidecar files for ITS_LIVE granules"
     )
-    parser.add_argument('-g', '--granule', required=True,
-                        help='Path to a single ITS_LIVE netcdf file (S3, https or local)')
-    parser.add_argument('-o', '--outdir', required=True,
-                        help='Output path for STAC catalog items, the default is s3://its-live-data/stac/collections/itslive/items/')
+    parser.add_argument(
+        "-g", "--granule", required=True, help="Path to a single ITS_LIVE NetCDF file"
+    )
+    parser.add_argument("-o", "--outdir", required=True, help="Output directory")
 
     args = parser.parse_args()
 
-    main(url=args.granule, outdir=args.outdir)
+    logging.basicConfig(
+        format="%(asctime)s - %(levelname)s - %(message)s",
+        datefmt="%m/%d/%Y %I:%M:%S %p",
+        level=logging.INFO,
+    )
+
+    logging.info(f"Processing {args.granule}")
+    metadata = generate_itslive_metadata(args.granule)
+    save_metadata(metadata, args.outdir)
+    logging.info(f"Done processing {args.granule}")
 
 
+if __name__ == "__main__":
+    main()
