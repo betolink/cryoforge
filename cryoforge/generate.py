@@ -386,7 +386,12 @@ def create_stac_item(ds, geom, url):
                 media_type=media_type,
                 roles=["overview" if key == "overview" else "data"],
                 extra_fields={
-                    "alternate": {"s3": {"href": s3_url, "alternate:name": "S3"}}
+                    "alternate": {
+                        "s3": {
+                            "href": s3_url.replace(".nc", ext),
+                            "alternate:name": "S3",
+                        }
+                    }
                 },
             ),
         )
