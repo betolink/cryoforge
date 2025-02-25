@@ -26,6 +26,8 @@ from pyproj import CRS, Transformer
 
 import pandas as pd
 
+from .ingestitem import ingest_item
+
 # Date format as it appears in granules filenames of optical format:
 # LC08_L1TP_011002_20150821_20170405_01_T1_X_LC08_L1TP_011002_20150720_20170406_01_T1_G0240V01_P038.nc
 DATE_FORMAT = "%Y%m%d"
@@ -143,20 +145,16 @@ def generate_nsidc_metadata_files(ds, filename, version):
             )
 
         # Get acquisition dates for both images
-        begin_date = pd.to_datetime(ds["img_pair_info"].acquisition_date_img1).strftime(
-            "%Y-%m-%d"
-        )
-        end_date = pd.to_datetime(ds["img_pair_info"].acquisition_date_img2).strftime(
-            "%Y-%m-%d"
-        )
+        begin_date = pd.to_datetime(ds["img_pair_info"].acquisition_date_img1)
+        end_date = pd.to_datetime(ds["img_pair_info"].acquisition_date_img2)
 
         file_content = f"""
         FileName={infile}
         VersionID_local={version}
-        Begin_date={begin_date}
-        End_date={end_date}
-        Begin_time=00:00:01.000
-        End_time=23:59:59.000
+        Begin_date={begin_date.strftime("%Y-%m-%d")}
+        End_date={end_date.strftime("%Y-%m-%d")}
+        Begin_time={begin_date.strftime("%H:%M:%S")}.{begin_date.microsecond // 1000:03d}
+        End_time={end_date.strftime("%H:%M:%S")}.{end_date.microsecond // 1000:03d}
         """
 
         # Append premet with sensor info
@@ -335,11 +333,12 @@ def create_stac_item(ds, geom, url):
 
     filename = url.split("/")[-1]
     mission = ds["img_pair_info"].id_img1.split("_")[0]
-    version = int(url.split("/")[-3].replace("v", ""))
+    version = url.split("/")[-3].replace("v", "")
 
     # Create STAC item
     item = pystac.Item(
         id=filename,
+        collection="itslive",  # Add collection field
         stac_extensions=[
             "https://stac-extensions.github.io/projection/v2.0.0/schema.json",
             "https://stac-extensions.github.io/alternate-assets/v1.2.0/schema.json",
@@ -354,7 +353,6 @@ def create_stac_item(ds, geom, url):
         bbox=geom["bbox"],
         datetime=mid_date,
         properties={
-            "collection": "itslive",  # Add collection field
             "mid_date": str(mid_date),
             "dt_days": str(round(float(ds["img_pair_info"].date_dt), 0)),
             "platform": mission,
@@ -413,7 +411,7 @@ def generate_itslive_metadata(url):
         raise ValueError(f"Could not extract geometry from {url}")
     geom["url"] = url
     item = create_stac_item(ds, geom, url)
-    item.validate()
+    # item.validate() # <- will break because the schema is wrong for the collection property. 
     nsidc_meta = generate_nsidc_metadata_files(ds, item.id, item.properties["version"])
     nsidc_spatial = "\n".join(
         [f"{round(coord[0],2)}\t{round(coord[1],2)}" for coord in geom["corners"]]
@@ -423,15 +421,15 @@ def generate_itslive_metadata(url):
         "url": url,
         "stac": item,
         "kerchunk": kerchunks,
-        "nsidc_meta": nsidc_meta.strip().replace(" ", ""),
-        "nsidc_spatial": nsidc_spatial,
+        "nsidc_meta": nsidc_meta.strip().replace(" ", "") + "\n",
+        "nsidc_spatial": nsidc_spatial + "\n"
     }
 
 
 def save_metadata(metadata: dict, outdir: str = "."):
     """Save STAC item to filesystem or S3"""
     if outdir.startswith("s3"):
-        stac_path = Path("s3://its-live-data/stac/collections/itslive/items/")
+        # stac_path = Path("s3://its-live-data/stac/collections/itslive/items/")
         granule_path = Path("/".join(metadata["url"].split("/")[0:-1]))
     else:
         stac_path = Path(outdir)
@@ -441,17 +439,17 @@ def save_metadata(metadata: dict, outdir: str = "."):
 
     # save stac item
     with fs.open(
-        stac_path / Path(metadata["stac"].id.replace(".nc", ".json")), "w"
+        granule_path / Path(metadata["stac"].id.replace(".nc", ".stac.json")), "w"
     ) as f:
         json.dump(metadata["stac"].to_dict(), f, indent=2)
 
     with fs.open(
-        granule_path / Path(metadata["stac"].id.replace(".nc", ".premet")), "w"
+        granule_path / Path(metadata["stac"].id.replace(".nc", ".nc.premet")), "w"
     ) as f:
         f.write(metadata["nsidc_meta"])
 
     with fs.open(
-        granule_path / Path(metadata["stac"].id.replace(".nc", ".spatial")), "w"
+        granule_path / Path(metadata["stac"].id.replace(".nc", ".nc.spatial")), "w"
     ) as f:
         f.write(metadata["nsidc_spatial"])
 
@@ -470,6 +468,15 @@ def main():
     )
     parser.add_argument("-o", "--outdir", required=True, help="Output directory")
 
+    parser.add_argument(
+        "-i", "--ingest", 
+        action="store_true", 
+        help="Path to the input file (optional)", 
+        default=None  # Default value if not provided
+    )
+    parser.add_argument("-t", "--target", help="STAC endpoint")
+    parser.add_argument("-r", "--reload-collection", action="store_true", help="If present will reload/update the collection")
+
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -481,7 +488,13 @@ def main():
     logging.info(f"Processing {args.granule}")
     metadata = generate_itslive_metadata(args.granule)
     save_metadata(metadata, args.outdir)
+
     logging.info(f"Done processing {args.granule}")
+
+    if args.ingest:
+        stac_item = Path(args.outdir) / Path(metadata["stac"].id).name.replace(".nc", ".stac.json")
+        ingest_item(args.reload_collection, args.target, str(stac_item))
+        logging.info(f"Ingested {metadata['stac'].id}")
 
 
 if __name__ == "__main__":

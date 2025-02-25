@@ -50,6 +50,7 @@ dependencies = [
 
 [project.scripts]
 metagen = "cryoforge.generate:main"
+ingest = "cryoforge.ingest:main"
 
 [project.optional-dependencies]
 
