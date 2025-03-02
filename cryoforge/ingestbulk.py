@@ -9,6 +9,11 @@ from dask.diagnostics.progress import ProgressBar
 from .generate import generate_itslive_metadata
 
 import requests
+import ctypes
+
+def trim_memory() -> int:
+    libc = ctypes.CDLL("libc.so.6")
+    return libc.malloc_trim(0)
 
 
 def post_or_put(url: str, data: dict):
@@ -28,9 +33,11 @@ def post_or_put(url: str, data: dict):
 def generate_stac_metadata(url: str, stac_server: str, collection: str):
     stack_metadata = generate_itslive_metadata(url)
     stac_item = stack_metadata["stac"].to_dict()
-    return post_or_put(urljoin(stac_server, f"collections/{collection}/items"), stac_item)
+    post_or_put(urljoin(stac_server, f"collections/{collection}/items"), stac_item)
+    trim_memory()
+    return
     
-def ingest_items(list_file: str, stac_server: str, workers: int = 4):
+def ingest_items(list_file: str, stac_server: str, scheduler: str ="processes", workers: int = 4):
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(message)s",
         datefmt="%m/%d/%Y %I:%M:%S %p",
@@ -42,7 +49,9 @@ def ingest_items(list_file: str, stac_server: str, workers: int = 4):
     logging.info(f"Reading list from {list_file}, {len(urls)} URLs found.")
     tasks = [dask.delayed(generate_stac_metadata)(url, stac_server, "itslive") for url in urls]
     with ProgressBar():
-        results = dask.compute(*tasks,num_workers=int(workers))
+        results = dask.compute(*tasks,
+                               scheduler=scheduler,
+                               num_workers=int(workers))
 
 
 def ingest_stac():
@@ -54,13 +63,14 @@ def ingest_stac():
         "-l", "--list", required=True, help="Path to a list of ITS_LIVE URLs to process and ingest"
     )
     parser.add_argument("-w", "--workers", type=int, default=4, help="Number of workers")
+    parser.add_argument("-s", "--scheduler", default="processes", help="Dask scheduler")
     
     parser.add_argument("-t", "--target", required=True, help="STAC endpoint")
 
     args = parser.parse_args()
 
     stac_endpoint = args.target
-    ingest_items(list_file=args.list, stac_server=stac_endpoint, workers=args.workers)
+    ingest_items(list_file=args.list, stac_server=stac_endpoint, scheduler=args.scheduler, workers=args.workers)
 
 
 if __name__ == "__main__":
