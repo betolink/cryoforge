@@ -47,7 +47,7 @@ def ingest_stac():
     )
     parser.add_argument("-t", "--target", required=True, help="STAC endpoint")
     parser.add_argument("-c", "--collection", required=True, help="STAC collection")
-    parser.add_argument("-r", "--reload-collection", action="store_rtue", help="If present will reload/update the collection")
+    parser.add_argument("-r", "--reload-collection", action="store_true", help="If present will reload/update the collection")
 
     args = parser.parse_args()
 
