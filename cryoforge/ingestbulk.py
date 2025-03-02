@@ -31,7 +31,15 @@ def generate_stac_metadata(url: str, stac_server: str, collection: str):
     return post_or_put(urljoin(stac_server, f"collections/{collection}/items"), stac_item)
     
 def ingest_items(list_file: str, stac_server: str, workers: int = 4):
+    logging.basicConfig(
+        format="%(asctime)s - %(levelname)s - %(message)s",
+        datefmt="%m/%d/%Y %I:%M:%S %p",
+        level=logging.INFO,
+    )
+
     urls = Path(list_file).read_text().splitlines()
+
+    logging.info(f"Reading list from {list_file}, {len(urls)} URLs found.")
     tasks = [dask.delayed(generate_stac_metadata)(url, stac_server, "itslive") for url in urls]
     with ProgressBar():
         results = dask.compute(*tasks,num_workers=workers)
@@ -51,13 +59,6 @@ def ingest_stac():
 
     args = parser.parse_args()
 
-    logging.basicConfig(
-        format="%(asctime)s - %(levelname)s - %(message)s",
-        datefmt="%m/%d/%Y %I:%M:%S %p",
-        level=logging.INFO,
-    )
-
-    logging.info(f"Ingesting {args.item}")
     stac_endpoint = args.target
     ingest_items(args.list, stac_endpoint, args.workers)
 
