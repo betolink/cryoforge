@@ -333,6 +333,16 @@ def create_stac_item(ds, geom, url):
 
     filename = url.split("/")[-1]
     mission = ds["img_pair_info"].id_img1.split("_")[0]
+    if "flight_direction_img1" in ds["img_pair_info"]:
+        scene_1_orbit_direction = ds["img_pair_info"].flight_direction_img1[0]
+    else:
+        scene_1_orbit_direction = "N/A"
+    if "flight_direction_img2" in ds["img_pair_info"]:
+        scene_2_orbit_direction = ds["img_pair_info"].flight_direction_img2[0]
+    else:
+        scene_2_orbit_direction = "N/A"
+    scene_1_id = ds["img_pair_info"].id_img1
+    scene_2_id = ds["img_pair_info"].id_img2
     version = url.split("/")[-3].replace("v", "")
 
     # Create STAC item
@@ -356,6 +366,10 @@ def create_stac_item(ds, geom, url):
             "mid_date": str(mid_date),
             "dt_days": str(round(float(ds["img_pair_info"].date_dt), 0)),
             "platform": mission,
+            "scene1_id": scene_1_id,
+            "scene2_id": scene_2_id,
+            "scene1_orbit_direction": scene_1_orbit_direction,
+            "scene2_orbit_direction": scene_2_orbit_direction,
             "start_datetime": str(start_date),
             "end_datetime": str(end_date),
             "percent_valid_pix": int(
@@ -432,7 +446,6 @@ def save_metadata(metadata: dict, outdir: str = "."):
         # stac_path = Path("s3://its-live-data/stac/collections/itslive/items/")
         granule_path = Path("/".join(metadata["url"].split("/")[0:-1]))
     else:
-        stac_path = Path(outdir)
         granule_path = Path(outdir)
 
     fs = fsspec.filesystem(outdir.split("://")[0] if "://" in outdir else "file")
@@ -459,7 +472,7 @@ def save_metadata(metadata: dict, outdir: str = "."):
         json.dump(metadata["kerchunk"], f, indent=2)
 
 
-def main():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Generate metadata sidecar files for ITS_LIVE granules"
     )
@@ -478,12 +491,16 @@ def main():
     parser.add_argument("-r", "--reload-collection", action="store_true", help="If present will reload/update the collection")
 
     args = parser.parse_args()
+    return args
 
+
+def main():
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(message)s",
         datefmt="%m/%d/%Y %I:%M:%S %p",
         level=logging.INFO,
     )
+    args = parse_args()
 
     logging.info(f"Processing {args.granule}")
     metadata = generate_itslive_metadata(args.granule)

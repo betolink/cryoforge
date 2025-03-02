@@ -51,6 +51,7 @@ dependencies = [
 [project.scripts]
 metagen = "cryoforge.generate:main"
 ingest = "cryoforge.ingest:main"
+bulk-ingest = "cryoforge.ingestbulk:main"
 
 [project.optional-dependencies]
 

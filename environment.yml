@@ -5,7 +5,7 @@ dependencies:
   - python=3.12
   - xarray
   - xstac
-  - dask
+  - dask[complete]
   - distributed
   - earthaccess
   - virtualizarr
