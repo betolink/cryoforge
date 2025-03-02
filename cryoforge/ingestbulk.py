@@ -42,7 +42,7 @@ def ingest_items(list_file: str, stac_server: str, workers: int = 4):
     logging.info(f"Reading list from {list_file}, {len(urls)} URLs found.")
     tasks = [dask.delayed(generate_stac_metadata)(url, stac_server, "itslive") for url in urls]
     with ProgressBar():
-        results = dask.compute(*tasks,num_workers=workers)
+        results = dask.compute(*tasks,num_workers=int(workers))
 
 
 def ingest_stac():
@@ -53,14 +53,14 @@ def ingest_stac():
     parser.add_argument(
         "-l", "--list", required=True, help="Path to a list of ITS_LIVE URLs to process and ingest"
     )
-    parser.add_argument("-w", "--workers", default=4, help="Number of workers")
+    parser.add_argument("-w", "--workers", type=int, default=4, help="Number of workers")
     
     parser.add_argument("-t", "--target", required=True, help="STAC endpoint")
 
     args = parser.parse_args()
 
     stac_endpoint = args.target
-    ingest_items(args.list, stac_endpoint, args.workers)
+    ingest_items(list_file=args.list, stac_server=stac_endpoint, workers=args.workers)
 
 
 if __name__ == "__main__":
