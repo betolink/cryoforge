@@ -27,7 +27,7 @@ def post_or_put(url: str, data: dict):
 
 def generate_stac_metadata(url: str, stac_server: str, collection: str):
     stack_metadata = generate_itslive_metadata(url)
-    stac_item = stack_metadata["stac"]
+    stac_item = stack_metadata["stac"].to_dict()
     return post_or_put(urljoin(stac_server, f"collections/{collection}/items"), stac_item)
     
 def ingest_items(list_file: str, stac_server: str, workers: int = 4):
