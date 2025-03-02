@@ -32,7 +32,7 @@ def generate_stac_metadata(url: str, stac_server: str, collection: str):
     stac_item = stack_metadata["stac"]
     return post_or_put(urljoin(stac_server, f"collections/{collection}/items"), stac_item)
     
-def ingest_items(list_file: str, stac_server: str, workers: int = 4)
+def ingest_items(list_file: str, stac_server: str, workers: int = 4):
     urls = Path(list_file).read_text().splitlines()
     tasks = [dask.delayed(generate_stac_metadata)(url, stac_server, "itslive") for url in urls]
     with ProgressBar():
