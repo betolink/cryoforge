@@ -1,7 +1,5 @@
 """Ingest sample data during docker-compose"""
 
-import json
-from typing import Any
 from pathlib import Path
 from urllib.parse import urljoin
 import argparse
