@@ -22,5 +22,3 @@ dependencies:
   - pytest
   - coiled
   - pip
-  - pip:
-    - -e .
