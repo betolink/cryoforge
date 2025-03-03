@@ -333,8 +333,14 @@ def create_stac_item(ds, geom, url):
 
     filename = url.split("/")[-1]
     mission = ds["img_pair_info"].id_img1.split("_")[0]
-    scene_1_orbit_direction = ds["img_pair_info"].flight_direction_img1
-    scene_2_orbit_direction = ds["img_pair_info"].flight_direction_img2
+    try:
+        scene_1_orbit_direction = ds["img_pair_info"].flight_direction_img1
+    except:
+        scene_1_orbit_direction = "N/A"
+    try:
+        scene_2_orbit_direction = ds["img_pair_info"].flight_direction_img2
+    except:
+        scene_2_orbit_direction = "N/A"
     scene_1_id = ds["img_pair_info"].id_img1
     scene_2_id = ds["img_pair_info"].id_img2
     version = url.split("/")[-3].replace("v", "")

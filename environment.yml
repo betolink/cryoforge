@@ -4,9 +4,11 @@ channels:
 dependencies:
   - python=3.12
   - xarray
+  - awscli
   - xstac
   - dask[complete]
   - distributed
+  - jq
   - earthaccess
   - virtualizarr
   - kerchunk

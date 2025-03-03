@@ -5,6 +5,7 @@ from urllib.parse import urljoin
 import argparse
 import logging
 import dask
+import fsspec
 from dask.diagnostics.progress import ProgressBar
 from .generate import generate_itslive_metadata
 
@@ -44,7 +45,8 @@ def ingest_items(list_file: str, stac_server: str, scheduler: str ="processes", 
         level=logging.INFO,
     )
 
-    urls = Path(list_file).read_text().splitlines()
+    with fsspec.open(list_file, mode="rt") as f:
+        urls = f.read().splitlines()
 
     logging.info(f"Reading list from {list_file}, {len(urls)} URLs found.")
     tasks = [dask.delayed(generate_stac_metadata)(url, stac_server, "itslive") for url in urls]
