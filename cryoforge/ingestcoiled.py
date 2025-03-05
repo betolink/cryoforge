@@ -46,7 +46,10 @@ def generate_stac_metadata(
     stack_metadata = generate_itslive_metadata(url)
     stac_item = stack_metadata["stac"].to_dict()
     if ingest:
-        post_or_put(urljoin(stac_server, f"collections/{collection}/items"), stac_item)
+        try:
+            post_or_put(urljoin(stac_server, f"collections/{collection}/items"), stac_item)
+        except Exception as e:
+            logging.error(f"Error with {url}: {e}")
     trim_memory()
     return
 

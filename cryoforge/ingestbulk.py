@@ -34,8 +34,10 @@ def post_or_put(url: str, data: dict):
 def generate_stac_metadata(url: str, stac_server: str, collection: str):
     stack_metadata = generate_itslive_metadata(url)
     stac_item = stack_metadata["stac"].to_dict()
-    post_or_put(urljoin(stac_server, f"collections/{collection}/items"), stac_item)
-    trim_memory()
+    try:
+        post_or_put(urljoin(stac_server, f"collections/{collection}/items"), stac_item)
+    except Exception as e:
+        logging.error(f"Error with {url}: {e}")
     return
     
 def ingest_items(list_file: str, stac_server: str, scheduler: str ="processes", workers: int = 4):
