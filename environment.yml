@@ -9,6 +9,9 @@ dependencies:
   - dask[complete]
   - distributed
   - jq
+  - stac-geoparquet
+  - fastparquet
+  - pyarrow
   - earthaccess
   - virtualizarr
   - kerchunk

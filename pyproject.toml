@@ -46,14 +46,16 @@ dependencies = [
   "shapely",
   "geojson",
   "zarr <=3.0.0a",
+  "stac-geoparquet",
+  "fastparquet",
+  "pyarrow",
+  "orjson",
 ]
 
 [project.scripts]
 metagen = "cryoforge.generate:main"
 ingest = "cryoforge.ingestitem:ingest_stac"
 bulk-ingest = "cryoforge.ingestbulk:ingest_stac"
-ingest-coiled = "cryoforge.ingestcoiled:ingest_stac_coiled"
-ingest-coiled-async = "cryoforge.ingestcoiledv2:ingest_stac_coiled_async"
 
 [project.optional-dependencies]
 
