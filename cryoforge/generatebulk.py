@@ -120,7 +120,7 @@ def generate_stac_catalog():
     parser.add_argument("-s", "--scheduler", default="processes", help="Dask scheduler")
     parser.add_argument("-f", "--format", default="json", help="STAC serialization, json or parquet")
     parser.add_argument("-b", "--bucket", help="S3 path where the output should be upload to")
-    parser.add_argument("-i", "--ingest", help="If present the stac items will be ingested into the STAC endpoint")
+    parser.add_argument("-i", "--ingest", action="store_true", help="If present the stac items will be ingested into the STAC endpoint")
     parser.add_argument("-t", "--target", help="STAC endpoint where items will be ingested")
 
     args = parser.parse_args()
