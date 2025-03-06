@@ -6,6 +6,7 @@ import argparse
 import logging
 import dask
 import fsspec
+import s3fs
 import os
 import orjson
 from dask.diagnostics.progress import ProgressBar
@@ -35,13 +36,14 @@ def post_or_put(url: str, data: dict):
         r.raise_for_status()
     return r.status_code
 
-def generate_stac_metadata(url: str, stac_server: str, collection: str):
+def generate_stac_metadata(url: str, stac_server: str, collection: str, ingest: bool = False):
     stack_metadata = generate_itslive_metadata(url)
     stac_item = stack_metadata["stac"]
-    try:
-        post_or_put(urljoin(stac_server, f"collections/{collection}/items"), stac_item.to_dict())
-    except Exception as e:
-        logging.error(f"Error with {url}: {e}")
+    if ingest:
+        try:
+            post_or_put(urljoin(stac_server, f"collections/{collection}/items"), stac_item.to_dict())
+        except Exception as e:
+            logging.error(f"Error with {url}: {e}")
     return stac_item
     
 def ingest_items(list_file: str,
@@ -56,23 +58,28 @@ def ingest_items(list_file: str,
         datefmt="%m/%d/%Y %I:%M:%S %p",
         level=logging.INFO,
     )
-    task_id = int(os.environ["COILED_BATCH_TASK_ID", "-1"])
+    id = os.environ.get("COILED_BATCH_TASK_ID", "-1")
+    task_id = int(id)
+    s3_read = s3fs.S3FileSystem(anon=True)
     if task_id>=0:
         # coiled job
-        list_files = s3.glob(path_list + "/**/*.txt")
+        list_files = s3_read.glob(list_file + "/**/*.txt")
         if task_id >= len(list_files):
             logging.info(f"Task ID {task_id} is out of range")
             return
         current_page = list_files[task_id]
+
+        logging.info(f"Running in Coiled with task ID: {task_id} and file P{current_page}")
     else:
+        logging.info(f"Running in local mode with file: {list_file}")
         current_page = list_file
     current_page_name = current_page.split("/")[-1].replace(".txt", "")
 
-    with fsspec.open(current_page, mode="rt") as f:
+    with s3_read.open(current_page, mode="rt") as f:
         urls = f.read().splitlines()
 
     logging.info(f"Reading list from {list_file}, {len(urls)} URLs found.")
-    tasks = [dask.delayed(generate_stac_metadata)(url, stac_server, "itslive") for url in urls]
+    tasks = [dask.delayed(generate_stac_metadata)(url, stac_server, "itslive", ingest) for url in urls]
     with ProgressBar():
         features = dask.compute(*tasks,
                                scheduler=scheduler,
