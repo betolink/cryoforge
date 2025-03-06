@@ -455,34 +455,60 @@ def generate_itslive_metadata(url):
 
 def save_metadata(metadata: dict, outdir: str = "."):
     """Save STAC item to filesystem or S3"""
+    fs = fsspec.filesystem(outdir.split("://")[0] if "://" in outdir else "file")
     if outdir.startswith("s3"):
         # stac_path = Path("s3://its-live-data/stac/collections/itslive/items/")
-        granule_path = Path("/".join(metadata["url"].split("/")[0:-1]))
+        stac_s3_url = metadata["stac"].assets.get("data").extra_fields.get("alternate", [])["s3"]["href"]
+        bucket_path = "/".join(stac_s3_url.split("/")[0:-1])
+        granule_path = f"{bucket_path}/{metadata["stac"].id}"
+        logging.info(f"Saving metadata to {bucket_path}/")
+        with fs.open(
+            f"{granule_path}.stac.json", "w"
+        ) as f:
+            json.dump(metadata["stac"].to_dict(), f, indent=2)
+
+        with fs.open(
+            f"{granule_path}.nc.premet", "w"
+        ) as f:
+            f.write(metadata["nsidc_meta"])
+        with fs.open(
+            f"{granule_path}.nc.spatial", "w"
+        ) as f:
+            f.write(metadata["nsidc_spatial"])
+
+        with fs.open(
+            f"{granule_path}.ref.json", "w"
+        ) as f:
+            json.dump(metadata["kerchunk"], f, indent=2)
+
     else:
         granule_path = Path(outdir)
 
-    fs = fsspec.filesystem(outdir.split("://")[0] if "://" in outdir else "file")
+        with fs.open(
+            granule_path / Path(f"{metadata["stac"].id}.stac.json"), "w"
+        ) as f:
+            json.dump(metadata["stac"].to_dict(), f, indent=2)
+
+        with fs.open(
+            granule_path / Path(f"{metadata["stac"].id}.nc.premet"), "w"
+        ) as f:
+            f.write(metadata["nsidc_meta"])
+
+        with fs.open(
+            granule_path / Path(f"{metadata["stac"].id}.nc.spatial"), "w"
+        ) as f:
+            f.write(metadata["nsidc_spatial"])
+
+        with fs.open(
+            granule_path / Path(f"{metadata["stac"].id}.ref.json"), "w"
+        ) as f:
+            json.dump(metadata["kerchunk"], f, indent=2)
+
+
+
+    logging.info(f"Saving metadata to {granule_path}")
 
     # save stac item
-    with fs.open(
-        granule_path / Path(metadata["stac"].id.replace(".nc", ".stac.json")), "w"
-    ) as f:
-        json.dump(metadata["stac"].to_dict(), f, indent=2)
-
-    with fs.open(
-        granule_path / Path(metadata["stac"].id.replace(".nc", ".nc.premet")), "w"
-    ) as f:
-        f.write(metadata["nsidc_meta"])
-
-    with fs.open(
-        granule_path / Path(metadata["stac"].id.replace(".nc", ".nc.spatial")), "w"
-    ) as f:
-        f.write(metadata["nsidc_spatial"])
-
-    with fs.open(
-        granule_path / Path(metadata["stac"].id.replace(".nc", ".ref.json")), "w"
-    ) as f:
-        json.dump(metadata["kerchunk"], f, indent=2)
 
 
 def parse_args() -> argparse.Namespace:

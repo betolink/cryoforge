@@ -46,7 +46,7 @@ def generate_stac_metadata(url: str, stac_server: str, collection: str, ingest: 
             logging.error(f"Error with {url}: {e}")
     return stac_item
     
-def ingest_items(list_file: str,
+def generate_items(list_file: str,
                  stac_server: str,
                  scheduler: str ="processes",
                  workers: int = 4,
@@ -96,7 +96,8 @@ def ingest_items(list_file: str,
         stac_geoparquet.arrow.to_parquet(items_arrow, f"{current_page_name}.parquet")
     else:
         logging.error(f"Invalid format {format}")
-    if s3_bucket and s3_bucket.startswith("s3://"):
+    # for now make sure we don't write to any prod dir
+    if s3_bucket and s3_bucket.startswith("s3://its-live-data/test-space/"):
         fs = fsspec.filesystem("s3")
         if format == "json":
             fs.put(f"{current_page_name}.ndjson", f"{s3_bucket}/{current_page_name}.ndjson")
@@ -107,7 +108,7 @@ def ingest_items(list_file: str,
         logging.info(f"Uploaded {current_page_name} to {s3_bucket}")
        
 
-def ingest_stac():
+def generate_stac_catalog():
     """Ingest sample data during docker-compose"""
     parser = argparse.ArgumentParser(
         description="Generate metadata sidecar files for ITS_LIVE granules"
@@ -118,13 +119,13 @@ def ingest_stac():
     parser.add_argument("-w", "--workers", type=int, default=4, help="Number of workers")
     parser.add_argument("-s", "--scheduler", default="processes", help="Dask scheduler")
     parser.add_argument("-f", "--format", default="json", help="STAC serialization, json or parquet")
-    parser.add_argument("-b", "--bucket", default="s3://its-live-data/test-space/luis_catalogs/sentinel1/stac", help="S3 path where the output should be upload to")
+    parser.add_argument("-b", "--bucket", help="S3 path where the output should be upload to")
     parser.add_argument("-i", "--ingest", help="If present the stac items will be ingested into the STAC endpoint")
     parser.add_argument("-t", "--target", help="STAC endpoint where items will be ingested")
 
     args = parser.parse_args()
 
-    ingest_items(list_file=args.list,
+    generate_items(list_file=args.list,
                  stac_server=args.target,
                  scheduler=args.scheduler,
                  workers=args.workers,
@@ -134,4 +135,4 @@ def ingest_stac():
 
 
 if __name__ == "__main__":
-    ingest_stac()
+    generate_stac_catalog()

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cryoforge"
-version = "0.1.2"
+version = "0.1.3"
 description = "Metadata genrator for ITS_LIVE velocity scenes"
 authors = [{name = "Luis Lopez", email = "betolin@gmail.com"}]
 maintainers = [
@@ -55,7 +55,7 @@ dependencies = [
 [project.scripts]
 metagen = "cryoforge.generate:main"
 ingest = "cryoforge.ingestitem:ingest_stac"
-bulk-ingest = "cryoforge.ingestbulk:ingest_stac"
+generate-catalog = "cryoforge.generatebulk:generate_stac_catalog"
 
 [project.optional-dependencies]
 
