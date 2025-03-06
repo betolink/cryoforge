@@ -2,7 +2,7 @@
 Script to generate STAC catalog files for ITS_LIVE granule dataset using xstac.
 
 Authors: Original by Mark Fahnestock, Masha Liukis
-Modified to use xstac with template
+Modified to use stac by Luis Lopez
 """
 
 import argparse
@@ -331,7 +331,7 @@ def create_stac_item(ds, geom, url):
     )
     mid_date = pd.to_datetime(ds["img_pair_info"].date_center).tz_localize("UTC")
 
-    filename = url.split("/")[-1]
+    filename = url.split("/")[-1].replace(".nc", "")
     mission = ds["img_pair_info"].id_img1.split("_")[0]
     try:
         scene_1_orbit_direction = ds["img_pair_info"].flight_direction_img1
@@ -344,6 +344,15 @@ def create_stac_item(ds, geom, url):
     scene_1_id = ds["img_pair_info"].id_img1
     scene_2_id = ds["img_pair_info"].id_img2
     version = url.split("/")[-3].replace("v", "")
+    try:
+        path_scene_1 = ds["img_pair_info"].path_img1
+    except:
+        path_scene_1 = "N/A"
+    try:
+        path_scene_2 = ds["img_pair_info"].path_img2
+    except:
+        path_scene_2 = "N/A"
+
 
     # Create STAC item
     item = pystac.Item(
@@ -364,10 +373,14 @@ def create_stac_item(ds, geom, url):
         datetime=mid_date,
         properties={
             "mid_date": str(mid_date),
+            "latitude": str(round(geom["center"][1], 4)),
+            "longitude": str(round(geom["center"][0], 4)),
             "dt_days": str(round(float(ds["img_pair_info"].date_dt), 0)),
             "platform": mission,
             "scene1_id": scene_1_id,
             "scene2_id": scene_2_id,
+            "path_scene_1": path_scene_1,
+            "path_scene_2": path_scene_2,
             "scene1_orbit_direction": scene_1_orbit_direction,
             "scene2_orbit_direction": scene_2_orbit_direction,
             "start_datetime": str(start_date),
