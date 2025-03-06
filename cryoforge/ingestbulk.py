@@ -96,6 +96,15 @@ def ingest_items(list_file: str,
         stac_geoparquet.arrow.to_parquet(items_arrow, f"{current_page_name}.parquet")
     else:
         logging.error(f"Invalid format {format}")
+    if s3_bucket and s3_bucket.startswith("s3://"):
+        fs = fsspec.filesystem("s3")
+        if format == "json":
+            fs.put(f"{current_page_name}.ndjson", f"{s3_bucket}/{current_page_name}.ndjson")
+        elif format == "parquet":
+            fs.put(f"{current_page_name}.parquet", f"{s3_bucket}/{current_page_name}.parquet")
+        else:
+            logging.error(f"Invalid format {format}")
+        logging.info(f"Uploaded {current_page_name} to {s3_bucket}")
        
 
 def ingest_stac():
@@ -120,6 +129,7 @@ def ingest_stac():
                  scheduler=args.scheduler,
                  workers=args.workers,
                  s3_bucket=args.bucket,
+                 format=args.format,
                  ingest=args.ingest)
 
 
