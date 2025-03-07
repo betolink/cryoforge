@@ -22,6 +22,8 @@ dependencies:
   - pystac
   - geojson
   - shapely
+  - libstdcxx-ng
+  - pyarrow
   - pytest
   - coiled
   - pip

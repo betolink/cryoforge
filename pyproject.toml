@@ -43,7 +43,7 @@ dependencies = [
   "pqdm >=0.1",
   "s3fs >=2022.11",
   "fsspec >=2022.11",
-  "shapely",
+  "shapely>=2.0.0",
   "geojson",
   "zarr <=3.0.0a",
   "stac-geoparquet",
