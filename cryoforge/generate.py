@@ -6,25 +6,21 @@ Modified to use stac by Luis Lopez
 """
 
 import argparse
-import json
-import logging
-import xarray as xr
-
-from shapely.geometry import Polygon
 import collections
-import fsspec
-import numpy as np
 import io
 import json
-import geojson
-
-import kerchunk.hdf
-import pystac
-
+import logging
 from pathlib import Path
-from pyproj import CRS, Transformer
 
+import fsspec
+import geojson
+import kerchunk.hdf
+import numpy as np
 import pandas as pd
+import pystac
+import xarray as xr
+from pyproj import CRS, Transformer
+from shapely.geometry import Polygon
 
 from .ingestitem import ingest_item
 
@@ -50,7 +46,7 @@ def generate_nsidc_metadata_files(ds, filename, version):
     Begin_date=2013-11-13
     End_date=2017-04-28
     Begin_time=00:00:01.000
-    End_time=23:59:59.000
+    End_time=23:59:59.
     Container=AssociatedPlatformInstrumentSensor
     AssociatedPlatformShortName=LANDSAT-8
     AssociatedInstrumentShortName=OLI
@@ -333,31 +329,18 @@ def create_stac_item(ds, geom, url):
 
     filename = url.split("/")[-1].replace(".nc", "")
     mission = ds["img_pair_info"].id_img1.split("_")[0]
-    try:
-        scene_1_orbit_direction = ds["img_pair_info"].flight_direction_img1
-    except:
-        scene_1_orbit_direction = "N/A"
-    try:
-        scene_2_orbit_direction = ds["img_pair_info"].flight_direction_img2
-    except:
-        scene_2_orbit_direction = "N/A"
+    scene_1_orbit_direction = ds["img_pair_info"].attrs.get("flight_direction_img1", "N/A")
+    scene_2_orbit_direction = ds["img_pair_info"].attrs.get("flight_direction_img2", "N/A")
     scene_1_id = ds["img_pair_info"].id_img1
     scene_2_id = ds["img_pair_info"].id_img2
     version = url.split("/")[-3].replace("v", "")
-    try:
-        path_scene_1 = ds["img_pair_info"].path_img1
-    except:
-        path_scene_1 = "N/A"
-    try:
-        path_scene_2 = ds["img_pair_info"].path_img2
-    except:
-        path_scene_2 = "N/A"
-
+    path_scene_1 = ds["img_pair_info"].attrs.get("path_img1", "N/A")
+    path_scene_2 = ds["img_pair_info"].attrs.get("path_img2", "N/A")
 
     # Create STAC item
     item = pystac.Item(
         id=filename,
-        collection="itslive",  # Add collection field
+        collection="itslive-granules",  # Add collection field
         stac_extensions=[
             "https://stac-extensions.github.io/projection/v2.0.0/schema.json",
             "https://stac-extensions.github.io/alternate-assets/v1.2.0/schema.json",
@@ -373,6 +356,7 @@ def create_stac_item(ds, geom, url):
         datetime=mid_date,
         properties={
             "mid_date": str(mid_date),
+            "created": str(pd.Timestamp.now(tz="UTC")),
             "latitude": str(round(geom["center"][1], 4)),
             "longitude": str(round(geom["center"][0], 4)),
             "dt_days": str(round(float(ds["img_pair_info"].date_dt), 0)),
@@ -438,18 +422,18 @@ def generate_itslive_metadata(url):
         raise ValueError(f"Could not extract geometry from {url}")
     geom["url"] = url
     item = create_stac_item(ds, geom, url)
-    # item.validate() # <- will break because the schema is wrong for the collection property. 
+    # item.validate() # <- will break because the schema is wrong for the collection property.
     nsidc_meta = generate_nsidc_metadata_files(ds, item.id, item.properties["version"])
-    nsidc_spatial = "\n".join(
-        [f"{round(coord[0],2)}\t{round(coord[1],2)}" for coord in geom["corners"]]
-    )
+    nsidc_spatial = "\n".join([
+        f"{round(coord[0], 2)}\t{round(coord[1], 2)}" for coord in geom["corners"]
+    ])
     return {
         "ds": ds,
         "url": url,
         "stac": item,
         "kerchunk": kerchunks,
         "nsidc_meta": nsidc_meta.strip().replace(" ", "") + "\n",
-        "nsidc_spatial": nsidc_spatial + "\n"
+        "nsidc_spatial": nsidc_spatial + "\n",
     }
 
 
@@ -457,54 +441,41 @@ def save_metadata(metadata: dict, outdir: str = "."):
     """Save STAC item to filesystem or S3"""
     fs = fsspec.filesystem(outdir.split("://")[0] if "://" in outdir else "file")
     if outdir.startswith("s3"):
-        # stac_path = Path("s3://its-live-data/stac/collections/itslive/items/")
-        stac_s3_url = metadata["stac"].assets.get("data").extra_fields.get("alternate", [])["s3"]["href"]
+        stac_s3_url = (
+            metadata["stac"]
+            .assets.get("data")
+            .extra_fields.get("alternate", [])["s3"]["href"]
+        )
         bucket_path = "/".join(stac_s3_url.split("/")[0:-1])
-        granule_path = f"{bucket_path}/{metadata["stac"].id}"
+        granule_path = f"{bucket_path}/{metadata['stac'].id}"
         logging.info(f"Saving metadata to {bucket_path}/")
-        with fs.open(
-            f"{granule_path}.stac.json", "w"
-        ) as f:
+        with fs.open(f"{granule_path}.stac.json", "w") as f:
             json.dump(metadata["stac"].to_dict(), f, indent=2)
 
-        with fs.open(
-            f"{granule_path}.nc.premet", "w"
-        ) as f:
+        with fs.open(f"{granule_path}.nc.premet", "w") as f:
             f.write(metadata["nsidc_meta"])
-        with fs.open(
-            f"{granule_path}.nc.spatial", "w"
-        ) as f:
+        with fs.open(f"{granule_path}.nc.spatial", "w") as f:
             f.write(metadata["nsidc_spatial"])
 
-        with fs.open(
-            f"{granule_path}.ref.json", "w"
-        ) as f:
+        with fs.open(f"{granule_path}.ref.json", "w") as f:
             json.dump(metadata["kerchunk"], f, indent=2)
 
     else:
         granule_path = Path(outdir)
 
-        with fs.open(
-            granule_path / Path(f"{metadata["stac"].id}.stac.json"), "w"
-        ) as f:
+        with fs.open(granule_path / Path(f"{metadata['stac'].id}.stac.json"), "w") as f:
             json.dump(metadata["stac"].to_dict(), f, indent=2)
 
-        with fs.open(
-            granule_path / Path(f"{metadata["stac"].id}.nc.premet"), "w"
-        ) as f:
+        with fs.open(granule_path / Path(f"{metadata['stac'].id}.nc.premet"), "w") as f:
             f.write(metadata["nsidc_meta"])
 
         with fs.open(
-            granule_path / Path(f"{metadata["stac"].id}.nc.spatial"), "w"
+            granule_path / Path(f"{metadata['stac'].id}.nc.spatial"), "w"
         ) as f:
             f.write(metadata["nsidc_spatial"])
 
-        with fs.open(
-            granule_path / Path(f"{metadata["stac"].id}.ref.json"), "w"
-        ) as f:
+        with fs.open(granule_path / Path(f"{metadata['stac'].id}.ref.json"), "w") as f:
             json.dump(metadata["kerchunk"], f, indent=2)
-
-
 
     logging.info(f"Saving metadata to {granule_path}")
 
@@ -521,13 +492,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("-o", "--outdir", required=True, help="Output directory")
 
     parser.add_argument(
-        "-i", "--ingest", 
-        action="store_true", 
-        help="Path to the input file (optional)", 
-        default=None  # Default value if not provided
+        "-i",
+        "--ingest",
+        action="store_true",
+        help="Path to the input file (optional)",
+        default=None,  # Default value if not provided
     )
     parser.add_argument("-t", "--target", help="STAC endpoint")
-    parser.add_argument("-r", "--reload-collection", action="store_true", help="If present will reload/update the collection")
+    parser.add_argument(
+        "-r",
+        "--reload-collection",
+        action="store_true",
+        help="If present will reload/update the collection",
+    )
 
     args = parser.parse_args()
     return args
@@ -548,7 +525,9 @@ def main():
     logging.info(f"Done processing {args.granule}")
 
     if args.ingest:
-        stac_item = Path(args.outdir) / Path(metadata["stac"].id).name.replace(".nc", ".stac.json")
+        stac_item = Path(args.outdir) / Path(metadata["stac"].id).name.replace(
+            ".nc", ".stac.json"
+        )
         ingest_item(args.reload_collection, args.target, str(stac_item))
         logging.info(f"Ingested {metadata['stac'].id}")
 

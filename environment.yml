@@ -26,4 +26,6 @@ dependencies:
   - pyarrow
   - pytest
   - coiled
+  - ruff
+  - mypy
   - pip

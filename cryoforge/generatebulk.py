@@ -1,58 +1,27 @@
-"""Ingest sample data during docker-compose"""
-
-from pathlib import Path
-from urllib.parse import urljoin
 import argparse
 import logging
-import dask
-import fsspec
-import s3fs
 import os
+import subprocess
+from pathlib import Path
+
+import dask
 import orjson
+import s3fs
 from dask.diagnostics.progress import ProgressBar
+from dask.distributed import Client, progress
+
 from .generate import generate_itslive_metadata
-
-import requests
-import ctypes
-import pyarrow as pa
-import stac_geoparquet
-
-def trim_memory() -> int:
-    libc = ctypes.CDLL("libc.so.6")
-    return libc.malloc_trim(0)
+from .tooling import list_s3_objects, split_s3_path, trim_memory
 
 
-def post_or_put(url: str, data: dict):
-    """Post or put data to url."""
-    r = requests.post(url, json=data)
-    if r.status_code == 409:
-        new_url = url + f"/{data['id']}"
-        # Exists, so update
-        r = requests.put(new_url, json=data)
-        # Unchanged may throw a 404
-        if not r.status_code == 404:
-            r.raise_for_status()
-    else:
-        r.raise_for_status()
-    return r.status_code
+def generate_stac_metadata(url: str):
+    metadata = generate_itslive_metadata(url)
+    return metadata["stac"]
 
-def generate_stac_metadata(url: str, stac_server: str, collection: str, ingest: bool = False):
-    stack_metadata = generate_itslive_metadata(url)
-    stac_item = stack_metadata["stac"]
-    if ingest:
-        try:
-            post_or_put(urljoin(stac_server, f"collections/{collection}/items"), stac_item.to_dict())
-        except Exception as e:
-            logging.error(f"Error with {url}: {e}")
-    return stac_item
-    
-def generate_items(list_file: str,
-                 stac_server: str,
-                 scheduler: str ="processes",
-                 workers: int = 4,
-                 format: str = "json",
-                 s3_bucket: str = "",
-                 ingest: bool = False):
+   
+def generate_items(regions_path: str,
+                   workers: int = 4,
+                   sync: bool = False):
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(message)s",
         datefmt="%m/%d/%Y %I:%M:%S %p",
@@ -63,75 +32,86 @@ def generate_items(list_file: str,
     s3_read = s3fs.S3FileSystem(anon=True)
     if task_id>=0:
         # coiled job
-        list_files = s3_read.glob(list_file + "/**/*.txt")
-        if task_id >= len(list_files):
+
+        region_paths = s3_read.ls(regions_path)
+        if task_id >= len(region_paths):
             logging.info(f"Task ID {task_id} is out of range")
-            return
-        current_page = list_files[task_id]
+            return 
+        current_region = f"s3://{region_paths[task_id]}"
 
-        logging.info(f"Running in Coiled with task ID: {task_id} and file P{current_page}")
+        logging.info(f"Running in Coiled with task ID: {task_id} and region {current_region}")
     else:
-        logging.info(f"Running in local mode with file: {list_file}")
-        current_page = list_file
-    current_page_name = current_page.split("/")[-1].replace(".txt", "")
+        logging.info(f"Running in local mode with path: {regions_path}")
+        current_region = regions_path
 
-    with s3_read.open(current_page, mode="rt") as f:
-        urls = f.read().splitlines()
+                                                             
+    batch_number = 0
+    source_base, source_relative_path = split_s3_path(current_region)
+    output_path = Path(source_relative_path)
+    output_path.mkdir(parents=True, exist_ok=True)
+    logging.info(f"Created output directory {output_path}")
 
-    logging.info(f"Reading list from {list_file}, {len(urls)} URLs found.")
-    tasks = [dask.delayed(generate_stac_metadata)(url, stac_server, "itslive", ingest) for url in urls]
-    with ProgressBar():
-        features = dask.compute(*tasks,
-                               scheduler=scheduler,
-                               num_workers=int(workers))
+    client = Client(processes=True, threads_per_worker=2, n_workers=workers)
+    processed_items = 0
+    files_generated = []
+
+    for batch in list_s3_objects(current_region, pattern="*.nc", batch_size=4000):
+        logging.info(f"Processing {len(batch)} files from {current_region}, batch [{batch_number}]")
+        if not batch:
+            break
+        ProgressBar().register() # not sure if needed
+        tasks = [dask.delayed(generate_stac_metadata)(url) for url in batch]
+        tasks = dask.delayed(tasks)
+        comp = tasks.persist()
+        progress(comp)
+        features = comp.compute()
+        for feature in features:
+            year = feature.properties["mid_date"][0:4]
+            stac_path = f"{output_path}/{year}.ndjson"
+            files_generated.append(stac_path)
+            with open(stac_path, 'ab') as f:  # 'ab' = append in binary mode
+                f.write(orjson.dumps(feature.to_dict()) + b"\n")
+
+        processed_items += len(features)
+        del features
         trim_memory()
-    logging.info(f"Finished processing {current_page}, {len(features)} STAC items generated.")
+        batch_number += 1
+    logging.info(f"Finished processing {current_region}, {processed_items} STAC items generated.")
 
-    if format == "json":
-        with open(f"{current_page_name}.ndjson", mode="wb") as f:
-            for item in features:
-                f.write(orjson.dumps(item.to_dict()) + b"\n")
-    elif format == "parquet":
-        items_arrow = stac_geoparquet.arrow.parse_stac_items_to_arrow(features)
-        stac_geoparquet.arrow.to_parquet(items_arrow, f"{current_page_name}.parquet")
-    else:
-        logging.error(f"Invalid format {format}")
-    # for now make sure we don't write to any prod dir
-    if s3_bucket and s3_bucket.startswith("s3://its-live-data/test-space/"):
-        fs = fsspec.filesystem("s3")
-        if format == "json":
-            fs.put(f"{current_page_name}.ndjson", f"{s3_bucket}/{current_page_name}.ndjson")
-        elif format == "parquet":
-            fs.put(f"{current_page_name}.parquet", f"{s3_bucket}/{current_page_name}.parquet")
-        else:
-            logging.error(f"Invalid format {format}")
-        logging.info(f"Uploaded {current_page_name} to {s3_bucket}")
-       
+    if sync:
+        logging.info(f"Syncing {output_path.parts[0]} to s3://its-live-data/test-space/stac_catalogs/")
+
+        result = subprocess.run(
+            ["aws",
+             "s3",
+             "sync",
+            f"{output_path.parts[0]}",
+            f"s3://its-live-data/test-space/stac_catalogs/{output_path.parts[0]}/",
+             "--exact-timestamps"], capture_output=True, text=True)
+        if result.stderr:
+            logging.info("ERRORS: ")
+            logging.error("\n" + result.stderr)
+        if result.stdout:
+            logging.info("\n" + result.stdout)
+
+  
 
 def generate_stac_catalog():
-    """Ingest sample data during docker-compose"""
+    """Generate and optionally ingest ITS_LIVE STAC catalogs"""
     parser = argparse.ArgumentParser(
         description="Generate metadata sidecar files for ITS_LIVE granules"
     )
     parser.add_argument(
-        "-l", "--list", required=True, help="Path to a list of ITS_LIVE URLs to process and ingest"
+        "-p", "--path", required=True, help="Path to a list of ITS_LIVE URLs to process and ingest"
     )
-    parser.add_argument("-w", "--workers", type=int, default=4, help="Number of workers")
-    parser.add_argument("-s", "--scheduler", default="processes", help="Dask scheduler")
-    parser.add_argument("-f", "--format", default="json", help="STAC serialization, json or parquet")
-    parser.add_argument("-b", "--bucket", help="S3 path where the output should be upload to")
-    parser.add_argument("-i", "--ingest", action="store_true", help="If present the stac items will be ingested into the STAC endpoint")
-    parser.add_argument("-t", "--target", help="STAC endpoint where items will be ingested")
+    parser.add_argument("-w", "--workers", type=int, default=4, help="Number of Dask workers")
+    parser.add_argument("-s", "--sync", action="store_true", help="If present the yearly stac items will be uploaded to S3")
 
     args = parser.parse_args()
 
-    generate_items(list_file=args.list,
-                 stac_server=args.target,
-                 scheduler=args.scheduler,
+    generate_items(regions_path=args.path,
                  workers=args.workers,
-                 s3_bucket=args.bucket,
-                 format=args.format,
-                 ingest=args.ingest)
+                 sync=args.sync)
 
 
 if __name__ == "__main__":

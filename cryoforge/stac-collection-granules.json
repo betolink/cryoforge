@@ -1,14 +1,14 @@
 {
-    "id": "itslive",
+    "id": "itslive-granules",
     "type": "Collection",
     "stac_version": "1.1.0",
-    "description": "ITS_LIVE Global Ice Velocity STAC",
+    "description": "ITS_LIVE Global Ice Velocity STAC catalog for individual granules",
     "stac_extensions": [
         "https://stac-extensions.github.io/projection/v2.0.0/schema.json",
         "https://stac-extensions.github.io/alternate-assets/v1.2.0/schema.json",
         "https://stac-extensions.github.io/version/v1.2.0/schema.json"
     ],
-    "title": "ITS_LIVE Glacier Velocity",
+    "title": "ITS_LIVE Glacier Velocity Pairs",
     "license": "CC-BY-4.0",
     "keywords": [
         "ice velocity",
