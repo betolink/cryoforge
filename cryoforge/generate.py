@@ -357,9 +357,9 @@ def create_stac_item(ds, geom, url):
         properties={
             "mid_date": str(mid_date),
             "created": str(pd.Timestamp.now(tz="UTC")),
-            "latitude": str(round(geom["center"][1], 4)),
-            "longitude": str(round(geom["center"][0], 4)),
-            "dt_days": str(round(float(ds["img_pair_info"].date_dt), 0)),
+            "latitude": round(geom["center"][1], 4),
+            "longitude": round(geom["center"][0], 4),
+            "dt_days": round(float(ds["img_pair_info"].date_dt), 0),
             "platform": mission,
             "scene1_id": scene_1_id,
             "scene2_id": scene_2_id,

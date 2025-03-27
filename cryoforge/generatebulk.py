@@ -8,7 +8,7 @@ import dask
 import orjson
 import s3fs
 from dask.diagnostics.progress import ProgressBar
-from dask.distributed import Client, progress
+from dask.distributed import Client, progress, LocalCluster
 
 from .generate import generate_itslive_metadata
 from .tooling import list_s3_objects, split_s3_path, trim_memory
@@ -51,7 +51,13 @@ def generate_items(regions_path: str,
     output_path.mkdir(parents=True, exist_ok=True)
     logging.info(f"Created output directory {output_path}")
 
-    client = Client(processes=True, threads_per_worker=2, n_workers=workers)
+    try:
+        client = Client.current()  # Returns existing Client if available
+    except Exception as e:
+        logging.warn("No cluster found, creating a new one")
+        cluster = LocalCluster(processes=True, threads_per_worker=2, n_workers=workers)
+        client = Client(cluster)
+
     processed_items = 0
     files_generated = []
 
@@ -94,7 +100,15 @@ def generate_items(regions_path: str,
         if result.stdout:
             logging.info("\n" + result.stdout)
 
-  
+        result = subprocess.run(
+            ["rm",
+             "-rf",
+             f"{output_path.parts[0]}"],
+             check=True)
+        if result.stderr:
+            logging.info("ERRORS: ")
+            logging.error("\n" + result.stderr)
+
 
 def generate_stac_catalog():
     """Generate and optionally ingest ITS_LIVE STAC catalogs"""
