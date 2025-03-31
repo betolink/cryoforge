@@ -403,20 +403,18 @@ def create_stac_item(ds, geom, url):
 
     # Add assets
     for key, ext, media_type in [
-        ("overview", ".png", pystac.MediaType.PNG),
         ("data", ".nc", pystac.MediaType.NETCDF),
         ("virtualzarr", ".ref.json", pystac.MediaType.JSON),
-        ("thumbnail", "._thumb.png", pystac.MediaType.PNG),
+        ("overview", ".png", pystac.MediaType.PNG),
+        ("thumbnail", "_thumb.png", pystac.MediaType.PNG),
     ]:
-        s3_url = url.replace(".s3.amazonaws.com", "").replace("https", "s3")
-        if key == "virtualzarr":
-            url = url.replace(".nc", ext)
-            s3_url = s3_url.replace(".nc", ".ref.json")
+        canonical_url = url.replace(".nc", ext)
         if media_type == pystac.MediaType.NETCDF or media_type == pystac.MediaType.JSON:
+            s3_url = canonical_url.replace(".s3.amazonaws.com", "").replace("https", "s3")
             extra_fields = {
                     "alternate": {
                         "s3": {
-                            "href": s3_url.replace(".nc", ext),
+                            "href": s3_url,
                             "alternate:name": "S3",
                         }
                     }
@@ -429,7 +427,7 @@ def create_stac_item(ds, geom, url):
         item.add_asset(
             key=key,
             asset=pystac.Asset(
-                href=s3_to_https_link(url.replace(".nc", ext)),
+                href=s3_to_https_link(canonical_url),
                 media_type=media_type,
                 roles=role,
                 extra_fields=extra_fields,
