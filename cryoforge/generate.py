@@ -316,15 +316,35 @@ def open_netcdf(url):
     return ds, h5chunks.translate()
 
 
+def s3_to_https_link(s3_path):
+    """
+    Convert an S3 URL to an HTTPS link for public access.
+    
+    Args:
+        s3_path (str): S3 URL in the format 's3://bucket/key'
+    
+    Returns:
+        str: HTTPS link to the S3 object
+    """
+    # Remove 's3://' prefix
+    path_without_prefix = s3_path.replace('s3://', '')
+    
+    # Split into bucket and key
+    bucket, key = path_without_prefix.split('/', 1)
+    
+    # Construct HTTPS link
+    return f"https://{bucket}.s3.amazonaws.com/{key}"
+
+
 def create_stac_item(ds, geom, url):
     """Create STAC item from dataset and geometry."""
     # Extract basic properties
     start_date = pd.to_datetime(ds["img_pair_info"].acquisition_date_img1).tz_localize(
         "UTC"
-    )
+    ).isoformat().replace("+00:00", "Z")
     end_date = pd.to_datetime(ds["img_pair_info"].acquisition_date_img2).tz_localize(
         "UTC"
-    )
+    ).isoformat().replace("+00:00", "Z")
     mid_date = pd.to_datetime(ds["img_pair_info"].date_center).tz_localize("UTC")
 
     filename = url.split("/")[-1].replace(".nc", "")
@@ -335,7 +355,11 @@ def create_stac_item(ds, geom, url):
     scene_2_id = ds["img_pair_info"].id_img2
     version = url.split("/")[-3].replace("v", "")
     path_scene_1 = ds["img_pair_info"].attrs.get("path_img1", "N/A")
+    row_scene_1 = ds["img_pair_info"].attrs.get("row_img1", "N/A")
     path_scene_2 = ds["img_pair_info"].attrs.get("path_img2", "N/A")
+    row_scene_2 = ds["img_pair_info"].attrs.get("row_img2", "N/A")
+    scene_1_path_row = f"{path_scene_1}{row_scene_1}" if path_scene_1 != "N/A" else "N/A"
+    scene_2_path_row = f"{path_scene_2}{row_scene_2}" if path_scene_2 != "N/A" else "N/A"
 
     # Create STAC item
     item = pystac.Item(
@@ -355,21 +379,21 @@ def create_stac_item(ds, geom, url):
         bbox=geom["bbox"],
         datetime=mid_date,
         properties={
-            "mid_date": str(mid_date),
-            "created": str(pd.Timestamp.now(tz="UTC")),
+            "mid_datetime": pd.to_datetime(mid_date).isoformat().replace("+00:00", "Z"),
+            "created": pd.Timestamp.now(tz="UTC").isoformat().replace("+00:00", "Z"),
             "latitude": round(geom["center"][1], 4),
             "longitude": round(geom["center"][0], 4),
             "dt_days": round(float(ds["img_pair_info"].date_dt), 0),
             "platform": mission,
-            "scene1_id": scene_1_id,
-            "scene2_id": scene_2_id,
-            "path_scene_1": path_scene_1,
-            "path_scene_2": path_scene_2,
-            "scene1_orbit_direction": scene_1_orbit_direction,
-            "scene2_orbit_direction": scene_2_orbit_direction,
+            "scene_1_id": scene_1_id,
+            "scene_2_id": scene_2_id,
+            "scene_1_path_row": scene_1_path_row,
+            "scene_2_path_row": scene_2_path_row,
+            "scene_1_orbit_direction": scene_1_orbit_direction,
+            "scene_2_orbit_direction": scene_2_orbit_direction,
             "start_datetime": str(start_date),
             "end_datetime": str(end_date),
-            "percent_valid_pix": int(
+            "percent_valid_pixels": int(
                 round(float(ds["img_pair_info"].roi_valid_percentage), 0)
             ),
             "proj:code": f"EPSG:{geom['epsg']}",
@@ -382,26 +406,33 @@ def create_stac_item(ds, geom, url):
         ("overview", ".png", pystac.MediaType.PNG),
         ("data", ".nc", pystac.MediaType.NETCDF),
         ("virtualzarr", ".ref.json", pystac.MediaType.JSON),
+        ("thumbnail", "._thumb.png", pystac.MediaType.PNG),
     ]:
         s3_url = url.replace(".s3.amazonaws.com", "").replace("https", "s3")
         if key == "virtualzarr":
             url = url.replace(".nc", ext)
             s3_url = s3_url.replace(".nc", ".ref.json")
-
-        item.add_asset(
-            key=key,
-            asset=pystac.Asset(
-                href=url.replace(".nc", ext),
-                media_type=media_type,
-                roles=["overview" if key == "overview" else "data"],
-                extra_fields={
+        if media_type == pystac.MediaType.NETCDF or media_type == pystac.MediaType.JSON:
+            extra_fields = {
                     "alternate": {
                         "s3": {
                             "href": s3_url.replace(".nc", ext),
                             "alternate:name": "S3",
                         }
                     }
-                },
+            }
+            role = ["data"]
+        else:
+            extra_fields = {}
+            role = ["overview" if key == "overview" else "thumbnail"]
+
+        item.add_asset(
+            key=key,
+            asset=pystac.Asset(
+                href=s3_to_https_link(url.replace(".nc", ext)),
+                media_type=media_type,
+                roles=role,
+                extra_fields=extra_fields,
             ),
         )
 
