@@ -349,8 +349,7 @@ def create_stac_item(ds, geom, url):
 
     filename = url.split("/")[-1].replace(".nc", "")
     mission = ds["img_pair_info"].id_img1.split("_")[0]
-    scene_1_orbit_direction = ds["img_pair_info"].attrs.get("flight_direction_img1", "N/A")
-    scene_2_orbit_direction = ds["img_pair_info"].attrs.get("flight_direction_img2", "N/A")
+    sat_orbit_direction = ds["img_pair_info"].attrs.get("flight_direction_img1", "N/A")
     scene_1_id = ds["img_pair_info"].id_img1
     scene_2_id = ds["img_pair_info"].id_img2
     version = url.split("/")[-3].replace("v", "")
@@ -369,6 +368,7 @@ def create_stac_item(ds, geom, url):
             "https://stac-extensions.github.io/projection/v2.0.0/schema.json",
             "https://stac-extensions.github.io/alternate-assets/v1.2.0/schema.json",
             "https://stac-extensions.github.io/version/v1.2.0/schema.json",
+            "https://stac-extensions.github.io/sat/v1.1.0/schema.json"
         ],
         geometry={
             "type": "Polygon",
@@ -389,8 +389,7 @@ def create_stac_item(ds, geom, url):
             "scene_2_id": scene_2_id,
             "scene_1_path_row": scene_1_path_row,
             "scene_2_path_row": scene_2_path_row,
-            "scene_1_orbit_direction": scene_1_orbit_direction,
-            "scene_2_orbit_direction": scene_2_orbit_direction,
+            "sat:orbit_state": sat_orbit_direction,
             "start_datetime": str(start_date),
             "end_datetime": str(end_date),
             "percent_valid_pixels": int(

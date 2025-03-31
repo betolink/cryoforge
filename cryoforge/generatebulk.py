@@ -72,7 +72,7 @@ def generate_items(regions_path: str,
         progress(comp)
         features = comp.compute()
         for feature in features:
-            year = feature.properties["mid_date"][0:4]
+            year = feature.properties["mid_datetime"][0:4]
             stac_path = f"{output_path}/{year}.ndjson"
             files_generated.append(stac_path)
             with open(stac_path, 'ab') as f:  # 'ab' = append in binary mode
