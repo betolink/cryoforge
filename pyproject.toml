@@ -49,6 +49,8 @@ dependencies = [
   "stac-geoparquet",
   "fastparquet",
   "pyarrow",
+  "pystac-client",
+  "pyproj",
   "orjson",
 ]
 
@@ -56,6 +58,7 @@ dependencies = [
 metagen = "cryoforge.generate:main"
 ingest = "cryoforge.ingestitem:ingest_stac"
 generate-catalog = "cryoforge.generatebulk:generate_stac_catalog"
+search-items = "cryoforge.search_items:search_items"
 
 [project.optional-dependencies]
 

@@ -52,15 +52,23 @@ def search_stac(bbox, max_items=100, percent_valid_pixels=None):
 
     return hrefs
 
-def main():
-    parser = argparse.ArgumentParser(description='Search STAC catalog based on bounding box derived from a NetCDF file.')
-    parser.add_argument('nc_url', help='URL of the NetCDF file')
-    parser.add_argument('--max-items', type=int, default=100, help='Maximum number of items to return (default: 100)')
-    parser.add_argument('--percent-valid-pixels', type=int, help='Filter items by minimum percent valid pixels (e.g., 90)')
+def search_items():
+    parser = argparse.ArgumentParser(description="Search STAC catalog based on bounding box derived from a NetCDF file.")
+    parser.add_argument("--granule", help="URL of the NetCDF file")
+    parser.add_argument("--bbox", required=True, help="Bounding box in the format 'lon_min,lat_min,lon_max,lat_max'")
+    parser.add_argument("--max-items", type=int, default=100, help="Maximum number of items to return (default: 100)")
+    parser.add_argument("--percent-valid-pixels", type=int, help="Filter items by minimum percent valid pixels (e.g., 90)")
     args = parser.parse_args()
 
     try:
-        bbox = get_bbox_wgs84(args.nc_url)
+        if args.granule:
+            bbox = get_bbox_wgs84(args.granule)
+        elif args.bbox:
+            bbox = list(map(float, args.bbox.split(",")))
+            if len(bbox) != 4:
+                raise ValueError("Bounding box must contain exactly four values.")
+        else:
+            raise ValueError("Either --granule or --bbox must be provided.")
         results = search_stac(bbox, args.max_items, args.percent_valid_pixels)
         print(json.dumps(results, indent=2))
     except Exception as e:
@@ -68,4 +76,4 @@ def main():
         sys.exit(1)
 
 if __name__ == "__main__":
-    main()
+    search_items()
