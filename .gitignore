@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 
 tests/data/
+tests/ingest_logs/
 
 # C extensions
 *.so
