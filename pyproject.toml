@@ -49,6 +49,8 @@ dependencies = [
   "stac-geoparquet",
   "fastparquet",
   "pyarrow",
+  "aiohttp",
+  "tenacity",
   "pystac-client",
   "pyproj",
   "orjson",

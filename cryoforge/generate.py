@@ -353,12 +353,12 @@ def create_stac_item(ds, geom, url):
     scene_1_id = ds["img_pair_info"].id_img1
     scene_2_id = ds["img_pair_info"].id_img2
     version = url.split("/")[-3].replace("v", "")
-    path_scene_1 = ds["img_pair_info"].attrs.get("path_img1", "N/A")
-    row_scene_1 = ds["img_pair_info"].attrs.get("row_img1", "N/A")
-    path_scene_2 = ds["img_pair_info"].attrs.get("path_img2", "N/A")
-    row_scene_2 = ds["img_pair_info"].attrs.get("row_img2", "N/A")
-    scene_1_path_row = f"{path_scene_1}{row_scene_1}" if path_scene_1 != "N/A" else "N/A"
-    scene_2_path_row = f"{path_scene_2}{row_scene_2}" if path_scene_2 != "N/A" else "N/A"
+    path_scene_1 = int(ds["img_pair_info"].attrs.get("path_img1", 0))
+    row_scene_1 = int(ds["img_pair_info"].attrs.get("row_img1", 0))
+    path_scene_2 = int(ds["img_pair_info"].attrs.get("path_img2", 0))
+    row_scene_2 = int(ds["img_pair_info"].attrs.get("row_img2", 0))
+    scene_1_path_row = f"{path_scene_1}/{row_scene_1}" if path_scene_1 != 0 else "N/A"
+    scene_2_path_row = f"{path_scene_2}/{row_scene_2}" if path_scene_2 != 0 else "N/A"
 
     # Create STAC item
     item = pystac.Item(
@@ -401,34 +401,29 @@ def create_stac_item(ds, geom, url):
     )
 
     # Add assets
-    for key, ext, media_type in [
-        ("data", ".nc", pystac.MediaType.NETCDF),
-        ("virtualzarr", ".ref.json", pystac.MediaType.JSON),
-        ("overview", ".png", pystac.MediaType.PNG),
-        ("thumbnail", "_thumb.png", pystac.MediaType.PNG),
+    for key, ext, media_type, role in [
+        ("data", ".nc", pystac.MediaType.NETCDF, "data"),
+        ("virtualzarr", ".ref.json", pystac.MediaType.JSON, "metadata"),
+        ("overview", ".png", pystac.MediaType.PNG, "overview"),
+        ("thumbnail", "_thumb.png", pystac.MediaType.PNG, "thumbnail"),
     ]:
         canonical_url = url.replace(".nc", ext)
-        if media_type == pystac.MediaType.NETCDF or media_type == pystac.MediaType.JSON:
-            s3_url = canonical_url.replace(".s3.amazonaws.com", "").replace("https", "s3")
-            extra_fields = {
-                    "alternate": {
-                        "s3": {
-                            "href": s3_url,
-                            "alternate:name": "S3",
-                        }
+        s3_url = canonical_url.replace(".s3.amazonaws.com", "").replace("https", "s3")
+        extra_fields = {
+                "alternate": {
+                    "s3": {
+                        "href": s3_url,
+                        "alternate:name": "S3",
                     }
-            }
-            role = ["data"]
-        else:
-            extra_fields = {}
-            role = ["overview" if key == "overview" else "thumbnail"]
+                }
+        } if key in ["data","virtualzarr"] else {}
 
         item.add_asset(
             key=key,
             asset=pystac.Asset(
                 href=s3_to_https_link(canonical_url),
                 media_type=media_type,
-                roles=role,
+                roles=[role],
                 extra_fields=extra_fields,
             ),
         )

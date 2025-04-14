@@ -60,7 +60,7 @@ FILE_LIST="${LOG_DIR}/s3_files_list_${JOB_ID}.txt"
 
 # Modified file listing section
 echo "Listing files from S3..."
-aws s3 ls "s3://${BUCKET_NAME}/${S3_PATH}" --recursive --output text | awk '{print $4}' > "$FILE_LIST"
+aws s3 ls "s3://${BUCKET_NAME}/${S3_PATH}" --no-sign-request --recursive --output text | awk '{print $4}' > "$FILE_LIST"
 
 # Load files into array from the text file
 mapfile -t files < "$FILE_LIST"
@@ -111,7 +111,7 @@ for s3_file in "${files[@]}"; do
         echo "Processing file: $s3_file"
 
         # Download the file to the local disk
-        if ! aws s3 cp "s3://${BUCKET_NAME}/${s3_file}" "$local_file"; then
+        if ! aws s3 cp "s3://${BUCKET_NAME}/${s3_file}" "$local_file" --no-sign-request; then
             echo "Failed to download $s3_file" >&2
             echo "FAILED|$s3_file|$(date '+%Y-%m-%d %H:%M:%S')|download_failed" >> "$PROGRESS_LOG"
             exit 1
