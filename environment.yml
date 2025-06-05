@@ -1,17 +1,19 @@
-name: cryoforge-13
+name: cryoforge
 channels:
   - conda-forge
 dependencies:
   - python=3.13
   - xarray
   - awscli
-  - xstac
   - dask[complete]
   - distributed
   - jq
   - stac-geoparquet
   - fastparquet
   - pyarrow
+  - obstore
+  - rustac
+  - python-duckdb
   - earthaccess
   - virtualizarr
   - kerchunk
@@ -22,10 +24,8 @@ dependencies:
   - h5netcdf
   - pystac
   - geojson
-  - smart-open
   - shapely
   - libstdcxx-ng
-  - pyarrow
   - pytest
   - coiled
   - ruff

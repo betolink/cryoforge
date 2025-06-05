@@ -1,6 +1,5 @@
 import argparse
 import sys
-import json
 import xarray as xr
 from pyproj import Transformer
 from pystac_client import Client

@@ -21,6 +21,7 @@ import pystac
 import xarray as xr
 from pyproj import CRS, Transformer
 from shapely.geometry import Polygon
+from typing import Dict, Union, List, Callable
 
 from .ingestitem import ingest_item
 
@@ -32,9 +33,6 @@ DATE_FORMAT = "%Y%m%d"
 # S1A_IW_SLC__1SSH_20170221T204710_20170221T204737_015387_0193F6_AB07_X_S1B_IW_SLC__1SSH_20170227T204628_20170227T204655_004491_007D11_6654_G0240V02_P094.nc
 DATE_TIME_FORMAT = "%Y%m%dT%H%M%S"
 
-# Number of retries for AWS S3 operations
-_NUM_AWS_COPY_RETRIES = 3
-_AWS_COPY_SLEEP_SECONDS = 3
 
 
 def generate_nsidc_metadata_files(ds, filename, version):
@@ -359,6 +357,8 @@ def create_stac_item(ds, geom, url):
     row_scene_2 = int(ds["img_pair_info"].attrs.get("row_img2", 0))
     scene_1_path_row = f"{path_scene_1}/{row_scene_1}" if path_scene_1 != 0 else "N/A"
     scene_2_path_row = f"{path_scene_2}/{row_scene_2}" if path_scene_2 != 0 else "N/A"
+    date_created =  pd.to_datetime(ds.attrs.get("date_created", "")).isoformat().replace("+00:00", "Z")
+    date_updated =  pd.to_datetime(ds.attrs.get("date_updated", "")).isoformat().replace("+00:00", "Z")
 
     # Create STAC item
     item = pystac.Item(
@@ -378,12 +378,14 @@ def create_stac_item(ds, geom, url):
         },
         bbox=geom["bbox"],
         datetime=mid_date,
+        # TODO: this should use a parametrized json template
         properties={
             "mid_datetime": pd.to_datetime(mid_date).isoformat().replace("+00:00", "Z"),
-            "created": pd.Timestamp.now(tz="UTC").isoformat().replace("+00:00", "Z"),
+            "created": date_created,
+            "updated": date_updated,
             "latitude": round(geom["center"][1], 4),
             "longitude": round(geom["center"][0], 4),
-            "dt_days": round(float(ds["img_pair_info"].date_dt), 0),
+            "date_dt": round(float(ds["img_pair_info"].date_dt), 0),
             "platform": mission,
             "scene_1_id": scene_1_id,
             "scene_2_id": scene_2_id,
