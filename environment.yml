@@ -1,4 +1,4 @@
-name: cryoforge
+name: cryoforge-dev
 channels:
   - conda-forge
 dependencies:
@@ -6,19 +6,21 @@ dependencies:
   - xarray
   - awscli
   - dask[complete]
-  - distributed
+  - distributed=2025.5.0
   - jq
   - stac-geoparquet
-  - fastparquet
   - pyarrow
   - obstore
+  - arro3-core
   - rustac
   - python-duckdb
   - earthaccess
   - virtualizarr
   - kerchunk
-  - jupyterlab
+  - jupyterlab<=4.2
+  - dask-labextension
   - rioxarray
+  - h3-py
   - tenacity
   - pyproj
   - h5netcdf
@@ -29,5 +31,4 @@ dependencies:
   - pytest
   - coiled
   - ruff
-  - mypy
   - pip

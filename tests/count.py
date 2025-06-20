@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
 import boto3
-import re
-import fnmatch
-import urllib.parse
 import os
 import json
 import datetime
@@ -10,7 +7,6 @@ import argparse
 import concurrent.futures
 import signal
 import sys
-import time
 from botocore import UNSIGNED
 from botocore.config import Config
 
@@ -169,7 +165,7 @@ def count_s3_files(s3_path, extension=".nc", workers=8, format_type="text", cach
     # If we're shutting down, don't display results
     if shutdown_requested:
         print(f"Progress saved to cache file: {cache_file}")
-        print(f"Run the command again to resume from where you left off.")
+        print("Run the command again to resume from where you left off.")
         return final_results
     
     # Rebuild cache file to remove duplicates (keeping only the latest entry for each dir)

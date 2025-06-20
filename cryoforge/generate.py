@@ -21,7 +21,8 @@ import pystac
 import xarray as xr
 from pyproj import CRS, Transformer
 from shapely.geometry import Polygon
-from typing import Dict, Union, List, Callable
+import obstore as obs
+from obstore.store import S3Store
 
 from .ingestitem import ingest_item
 
@@ -292,8 +293,26 @@ def get_geom(ds, precision, projection):
     }
 
 
+def open_async_netcdf(url: str, fs):
+    if isinstance(fs, S3Store):
+        url = url.replace("s3://its-live-data/", "")
+        result = obs.get(fs, url)
+        file_content =  io.BytesIO(result.bytes().to_bytes())
+    elif isinstance(fs, fsspec.AbstractFileSystem):
+        with fs.open(url, mode="rb", skip_instance_cache=True) as f:
+            file_content = io.BytesIO(f.read())
+    else:
+        raise ValueError(f"Unsupported filesystem type: {type(fs)}")
+
+    # Convert with kerchunk
+    # h5chunks = kerchunk.hdf.SingleHdf5ToZarr(file_content, url=url, inline_threshold=100).translate()
+    kerchunks = None
+
+    # Load xarray Dataset from in-memory file
+    ds = xr.open_dataset(file_content, engine="h5netcdf")
+    return ds, kerchunks
+
 def open_netcdf(url):
-    # Choose storage options based on protocol
     so = {}
     if url.startswith("s3://"):
         so = {"anon": True, "skip_instance_cache": True}  # Disable caching for S3
@@ -302,7 +321,6 @@ def open_netcdf(url):
     else:
         so = {}
 
-    # Open the file with fsspec
     with fsspec.open(url, mode="rb", **so) as f:  # type: ignore
         file_content = io.BytesIO(f.read())  # type: ignore
         h5chunks = kerchunk.hdf.SingleHdf5ToZarr(
@@ -357,9 +375,14 @@ def create_stac_item(ds, geom, url):
     row_scene_2 = int(ds["img_pair_info"].attrs.get("row_img2", 0))
     scene_1_path_row = f"{path_scene_1}/{row_scene_1}" if path_scene_1 != 0 else "N/A"
     scene_2_path_row = f"{path_scene_2}/{row_scene_2}" if path_scene_2 != 0 else "N/A"
-    date_created =  pd.to_datetime(ds.attrs.get("date_created", "")).isoformat().replace("+00:00", "Z")
-    date_updated =  pd.to_datetime(ds.attrs.get("date_updated", "")).isoformat().replace("+00:00", "Z")
-
+    date_created =  pd.to_datetime(ds.attrs.get("date_created", "")).tz_localize(
+        "UTC"
+    ).isoformat().replace("+00:00", "Z")
+    date_updated = pd.to_datetime(ds.attrs.get("date_updated", ""), errors="coerce")
+    date_updated = (
+        date_created if pd.isna(date_updated)  # Fallback if invalid
+        else date_updated.tz_localize("UTC").isoformat().replace("+00:00", "Z")
+    )
     # Create STAC item
     item = pystac.Item(
         id=filename,
@@ -405,7 +428,6 @@ def create_stac_item(ds, geom, url):
     # Add assets
     for key, ext, media_type, role in [
         ("data", ".nc", pystac.MediaType.NETCDF, "data"),
-        ("virtualzarr", ".ref.json", pystac.MediaType.JSON, "metadata"),
         ("overview", ".png", pystac.MediaType.PNG, "overview"),
         ("thumbnail", "_thumb.png", pystac.MediaType.PNG, "thumbnail"),
     ]:
@@ -418,7 +440,7 @@ def create_stac_item(ds, geom, url):
                         "alternate:name": "S3",
                     }
                 }
-        } if key in ["data","virtualzarr"] else {}
+        } if key in ["data"] else {}
 
         item.add_asset(
             key=key,
@@ -433,8 +455,12 @@ def create_stac_item(ds, geom, url):
     return item
 
 
-def generate_itslive_metadata(url):
-    original_ds, kerchunks = open_netcdf(url)
+
+def generate_itslive_metadata(url, store):
+    if store:
+        original_ds, kerchunks = open_async_netcdf(url, store)
+    else:
+        original_ds, kerchunks = open_netcdf(url)
     if original_ds is None:
         raise ValueError(f"Could not open {url}")
 
@@ -544,7 +570,7 @@ def main():
     args = parse_args()
 
     logging.info(f"Processing {args.granule}")
-    metadata = generate_itslive_metadata(args.granule)
+    metadata = generate_itslive_metadata(args.granule, store=None) # not async
     save_metadata(metadata, args.outdir)
 
     logging.info(f"Done processing {args.granule}")

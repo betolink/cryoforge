@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cryoforge"
-version = "0.1.6"
+version = "0.2.0"
 description = "Metadata genrator for ITS_LIVE velocity scenes"
 authors = [{name = "Luis Lopez", email = "betolin@gmail.com"}]
 maintainers = [
@@ -35,31 +35,35 @@ dependencies = [
   "xstac >= 0.1.0",
   "dask >= 2024.11",
   "distributed >= 2024.11",
-  "earthaccess >= 0.12.0",
-  "virtualizarr >= 0.1.0",
+  "earthaccess >= 0.14.0",
+  "virtualizarr",
   "kerchunk >= 0.2.6",
   "h5netcdf >= 1.5.0",
   "pystac >= 1.12.0",
-  "pqdm >=0.1",
   "s3fs >=2022.11",
   "fsspec >=2022.11",
   "shapely>=2.0.0",
   "geojson",
-  "zarr <=3.0.0a",
+  "zarr",
+  "h3",
   "stac-geoparquet",
   "fastparquet",
   "pyarrow",
-  "aiohttp",
+  "obstore",
+  "arro3-core",
+  "rustac>=0.8.1",
+  "duckdb",
   "tenacity",
   "pystac-client",
   "pyproj",
-  "orjson",
+  "orjson"
 ]
 
 [project.scripts]
 metagen = "cryoforge.generate:main"
 ingest = "cryoforge.ingestitem:ingest_stac"
 generate-catalog = "cryoforge.generatebulk:generate_stac_catalog"
+generate-from-parquet = "cryoforge.generatebatched:generate_stac_catalog"
 search-items = "cryoforge.search_items:search_items"
 
 [project.optional-dependencies]
