@@ -84,6 +84,8 @@ def search_duckstac(catalog: str = "s3://its-live-data/test-space/stac/geoparque
             [args.bbox[0], args.bbox[1]]
             ]]
         }
+    else:
+        raise ValueError("Either --geojson, --granule or --bbox must be provided.")
 
     search_args = {
         "intersects": geom,
@@ -130,6 +132,7 @@ def search_items():
     try:
         if args.granule:
             bbox = get_bbox_wgs84(args.granule)
+            args.bbox = bbox  # Set bbox from granule
         elif args.bbox:
             bbox = list(map(float, args.bbox.split(",")))
             if len(bbox) != 4:
