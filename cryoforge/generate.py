@@ -24,6 +24,8 @@ from shapely.geometry import Polygon
 import obstore as obs
 from obstore.store import S3Store
 
+from typing import Any
+
 from .ingestitem import ingest_item
 
 # Date format as it appears in granules filenames of optical format:
@@ -312,7 +314,7 @@ def open_async_netcdf(url: str, fs):
     ds = xr.open_dataset(file_content, engine="h5netcdf")
     return ds, kerchunks
 
-def open_netcdf(url):
+def open_netcdf(url: str="", with_kerchunk: bool = False) -> tuple:
     so = {}
     if url.startswith("s3://"):
         so = {"anon": True, "skip_instance_cache": True}  # Disable caching for S3
@@ -321,16 +323,23 @@ def open_netcdf(url):
     else:
         so = {}
 
+    kerchunks = None
+
     with fsspec.open(url, mode="rb", **so) as f:  # type: ignore
         file_content = io.BytesIO(f.read())  # type: ignore
-        h5chunks = kerchunk.hdf.SingleHdf5ToZarr(
-            file_content, url=url, inline_threshold=100
-        )
+        if with_kerchunk:
+            # Convert with kerchunk
+            # This will create a kerchunk reference object for the HDF5 file
+            # which can be used to access the data without downloading the entire file.
+            h5chunks = kerchunk.hdf.SingleHdf5ToZarr(
+                file_content, url=url, inline_threshold=100
+            )
+            kerchunks = h5chunks.translate()
 
     # Open dataset from memory
     ds = xr.open_dataset(file_content, engine="h5netcdf")
-    return ds, h5chunks.translate()
 
+    return ds, kerchunks
 
 def s3_to_https_link(s3_path):
     """
@@ -456,11 +465,18 @@ def create_stac_item(ds, geom, url):
 
 
 
-def generate_itslive_metadata(url, store):
+def generate_itslive_metadata(url: str, store:Any = None, with_kerchunk: bool=False ) -> dict:
+    """
+    Generate metadata for ITS_LIVE granule dataset.
+
+    Args:
+        url (str): URL to the ITS_LIVE granule dataset.
+        store (Any, optional): Optional store for async reading. Defaults to None.
+    """
     if store:
         original_ds, kerchunks = open_async_netcdf(url, store)
     else:
-        original_ds, kerchunks = open_netcdf(url)
+        original_ds, kerchunks = open_netcdf(url, with_kerchunk=with_kerchunk)
     if original_ds is None:
         raise ValueError(f"Could not open {url}")
 
@@ -508,8 +524,9 @@ def save_metadata(metadata: dict, outdir: str = "."):
         with fs.open(f"{granule_path}.nc.spatial", "w") as f:
             f.write(metadata["nsidc_spatial"])
 
-        with fs.open(f"{granule_path}.ref.json", "w") as f:
-            json.dump(metadata["kerchunk"], f, indent=2)
+        if metadata["kerchunk"] is not None:
+            with fs.open(f"{granule_path}.ref.json", "w") as f:
+                json.dump(metadata["kerchunk"], f, indent=2)
 
     else:
         granule_path = Path(outdir)
@@ -524,9 +541,9 @@ def save_metadata(metadata: dict, outdir: str = "."):
             granule_path / Path(f"{metadata['stac'].id}.nc.spatial"), "w"
         ) as f:
             f.write(metadata["nsidc_spatial"])
-
-        with fs.open(granule_path / Path(f"{metadata['stac'].id}.ref.json"), "w") as f:
-            json.dump(metadata["kerchunk"], f, indent=2)
+        if metadata["kerchunk"] is not None:
+           with fs.open(granule_path / Path(f"{metadata['stac'].id}.ref.json"), "w") as f:
+                json.dump(metadata["kerchunk"], f, indent=2)
 
     logging.info(f"Saving metadata to {granule_path}")
 
