@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cryoforge"
-version = "0.2.2"
+version = "0.2.3"
 description = "Metadata genrator for ITS_LIVE velocity scenes"
 authors = [{name = "Luis Lopez", email = "betolin@gmail.com"}]
 maintainers = [
@@ -44,7 +44,7 @@ dependencies = [
   "fsspec >=2022.11",
   "shapely>=2.0.0",
   "geojson",
-  "zarr",
+  "zarr<=3.0.0a",
   "h3",
   "stac-geoparquet",
   "fastparquet",
