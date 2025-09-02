@@ -28,6 +28,9 @@ from typing import Any
 
 from .ingestitem import ingest_item
 
+# TODO: Hard-coded here for now, but we should add this to the granule metadata and parse it from there
+ITS_LIVE_DATA_VERSION = '002'
+
 # Date format as it appears in granules filenames of optical format:
 # LC08_L1TP_011002_20150821_20170405_01_T1_X_LC08_L1TP_011002_20150720_20170406_01_T1_G0240V01_P038.nc
 DATE_FORMAT = "%Y%m%d"
@@ -377,7 +380,7 @@ def create_stac_item(ds, geom, url):
     sat_orbit_direction = ds["img_pair_info"].attrs.get("flight_direction_img1", "N/A")
     scene_1_id = ds["img_pair_info"].id_img1
     scene_2_id = ds["img_pair_info"].id_img2
-    version = url.split("/")[-3].replace("v", "")
+    version = ITS_LIVE_DATA_VERSION
     path_scene_1 = int(ds["img_pair_info"].attrs.get("path_img1", 0))
     row_scene_1 = int(ds["img_pair_info"].attrs.get("row_img1", 0))
     path_scene_2 = int(ds["img_pair_info"].attrs.get("path_img2", 0))
