@@ -1,0 +1,35 @@
+name: staclive
+channels:
+  - conda-forge
+dependencies:
+  - python=3.13
+  - awscli
+  - s3fs
+  - dask[complete]
+  - distributed=2025.5.0
+  - jq
+  - stac-geoparquet
+  - pyarrow
+  - obstore
+  - arro3-core
+  - rustac
+  - python-duckdb
+  - jupyterlab
+  - dask-labextension
+  - pyproj
+  - pystac
+  - geojson
+  - shapely
+  - libstdcxx-ng
+  - coiled
+  - h3-py 
+  - h3
+  - tqdm
+  - s2geometry
+  - lonboard
+  - polars
+  - geopandas
+  - ruff
+  - jupyterlab_code_formatter
+  - mypy
+  - pip
