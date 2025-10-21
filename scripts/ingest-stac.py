@@ -435,7 +435,6 @@ async def translate_ndjson_to_geoparquet_s3(local_file_path, s3_bucket, s3_key):
             client_options={"timeout": "4m"},
             skip_signature=True,
         )
-
         # Create S3 store for writing (destination)
         write_store = S3Store(
             bucket=s3_bucket,
@@ -443,61 +442,50 @@ async def translate_ndjson_to_geoparquet_s3(local_file_path, s3_bucket, s3_key):
             region="us-west-2",  # Adjust region as needed
             client_options={"timeout": "8m"},
         )
-
         # Read the local ndjson file using rustac
         local_path_str = str(local_file_path)
         stac_data = await rustac.read(local_path_str, store=None)
 
         # Convert s3_key from .ndjson to .parquet
         parquet_s3_key = s3_key.replace(".ndjson", ".parquet")
+        parquet_s3_path = f"s3://{s3_bucket}/{parquet_s3_key}"
 
-        # Try to read existing parquet file from S3
+        # Normalize new data to features list
+        if stac_data["type"] == "Feature":
+            new_features = [stac_data]
+        elif stac_data["type"] == "FeatureCollection":
+            new_features = stac_data["features"]
+        else:
+            new_features = [stac_data]
+
+        # Try to read existing parquet file from S3 and append
         try:
-            existing_data = await rustac.read(
-                f"s3://{s3_bucket}/{parquet_s3_key}", store=read_store
-            )
+            existing_data = await rustac.read(parquet_s3_path, store=read_store)
 
-            # Merge with existing data
-            if existing_data["type"] == "Feature" and stac_data["type"] == "Feature":
-                merged_data = {
-                    "type": "FeatureCollection",
-                    "features": [existing_data, stac_data],
-                }
-            elif (
-                existing_data["type"] == "FeatureCollection"
-                and stac_data["type"] == "Feature"
-            ):
-                existing_data["features"].append(stac_data)
-                merged_data = existing_data
-            elif (
-                existing_data["type"] == "Feature"
-                and stac_data["type"] == "FeatureCollection"
-            ):
-                stac_data["features"].insert(0, existing_data)
-                merged_data = stac_data
-            elif (
-                existing_data["type"] == "FeatureCollection"
-                and stac_data["type"] == "FeatureCollection"
-            ):
-                existing_data["features"].extend(stac_data["features"])
-                merged_data = existing_data
+            # Extract existing features
+            if existing_data["type"] == "Feature":
+                old_features = [existing_data]
+            elif existing_data["type"] == "FeatureCollection":
+                old_features = existing_data["features"]
             else:
-                merged_data = stac_data
+                old_features = []
+
+            # Append new features to old features
+            merged_features = old_features + new_features
 
         except Exception:
-            # If file doesn't exist or can't be read, use local data only
-            merged_data = stac_data
+            # If file doesn't exist or can't be read, use new data only
+            merged_features = new_features
 
-        # Write merged data to S3 as geoparquet
+        # Write merged features to S3 as geoparquet
         await rustac.write(
-            f"s3://{s3_bucket}/{parquet_s3_key}",
-            merged_data,
+            parquet_s3_path,
+            merged_features,
             format="parquet",
             store=write_store,
         )
 
         return True
-
     except Exception as e:
         logger.error(
             f"Failed to translate and upload {local_file_path} to {s3_key}: {str(e)}"
