@@ -71,101 +71,14 @@ def extract_year(stac_item: Dict[str, Any]) -> str:
     return "unknown"
 
 
-def batch_items_to_disk(
-    items, batch_dir, tiling_system, mission, tile_id, year, format="ndjson"
-):
+def batch_items_to_disk(items, batch_dir, tiling_system, mission, tile_id, year):
+    """Write items to disk as ndjson"""
     nested_dir = Path(batch_dir) / tiling_system / mission / tile_id
     nested_dir.mkdir(parents=True, exist_ok=True)
 
-    if format == "geoparquet":
-        out_file = nested_dir / f"{year}.ndjson"  # Still write as ndjson initially
-        with open(out_file, "ab") as f:
-            f.write(b"".join(items))
-    else:  # ndjson format
-        out_file = nested_dir / f"{year}.ndjson"
-        with open(out_file, "ab") as f:
-            f.write(b"".join(items))
-
-
-async def translate_ndjson_to_geoparquet_local(local_ndjson_path, local_output_dir):
-    """
-    Translate local ndjson file to geoparquet and save locally using rustac library.
-    """
-    try:
-        # Read the local ndjson file using rustac
-        local_path_str = str(local_ndjson_path)
-        stac_data = await rustac.read(local_path_str, store=None)  # None for local file
-
-        # Create output path with .parquet extension, preserving relative structure
-        # Calculate relative path from batch_dir
-        relative_path = local_ndjson_path.relative_to(
-            local_ndjson_path.parent.parent.parent.parent
-        )
-        parquet_output_path = Path(local_output_dir) / relative_path
-        parquet_output_path = parquet_output_path.with_suffix(".parquet")
-
-        # Create parent directories
-        parquet_output_path.parent.mkdir(parents=True, exist_ok=True)
-
-        # Convert the path to string for rustac
-        parquet_output_str = str(parquet_output_path)
-
-        # Write data as geoparquet locally
-        await rustac.write(parquet_output_str, stac_data, format="parquet", store=None)
-
-        # Log success only if verbose enough
-        if logging.getLogger().isEnabledFor(logging.INFO):
-            logger.info(
-                f"Successfully converted {local_ndjson_path} to {parquet_output_path}"
-            )
-        return True
-
-    except Exception as e:
-        logger.error(f"Failed to translate {local_ndjson_path} to geoparquet: {str(e)}")
-        return False
-
-
-def convert_local_ndjson_to_geoparquet(local_root: str, local_output_dir: str):
-    """
-    Convert all local ndjson files to geoparquet files and save locally.
-    """
-    ndjson_files = list(Path(local_root).rglob("*.ndjson"))
-
-    logger.info(f"Converting {len(ndjson_files)} ndjson files to geoparquet")
-
-    # Process each ndjson file
-    successful = 0
-    failed = 0
-
-    for ndjson_file in tqdm(ndjson_files, desc="Converting to GeoParquet"):
-        try:
-            success = asyncio.run(
-                translate_ndjson_to_geoparquet_local(ndjson_file, local_output_dir)
-            )
-            if success:
-                successful += 1
-            else:
-                failed += 1
-        except Exception as e:
-            failed += 1
-            logger.error(f"Error processing {ndjson_file}: {str(e)}")
-
-    logger.info(
-        f"GeoParquet conversion complete: {successful} successful, {failed} failed"
-    )
-
-
-def list_s3_files(bucket: str, prefix: str, suffix=".json"):
-    s3 = boto3.client("s3")
-    paginator = s3.get_paginator("list_objects_v2")
-
-    all_files = []
-    for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
-        for obj in page.get("Contents", []):
-            key = obj["Key"]
-            if key.endswith(suffix):
-                all_files.append(f"s3://{bucket}/{key}")
-    return all_files
+    out_file = nested_dir / f"{year}.ndjson"
+    with open(out_file, "ab") as f:
+        f.write(b"".join(items))
 
 
 def copy_s3_local(
@@ -174,6 +87,7 @@ def copy_s3_local(
     suffix: str = ".json",
     local_path: str = ".",
 ):
+    """Copy files from S3 to local using AWS CLI"""
     if not bucket or not prefix:
         raise ValueError("Bucket and prefix must be non-empty strings.")
     if not isinstance(suffix, str) or not suffix.startswith("."):
@@ -201,11 +115,10 @@ def copy_s3_local(
     )
 
     env = os.environ.copy()
-    env["AWS_MAX_CONCURRENT_REQUESTS"] = "256"  # number of concurrent S3 requests
-    env["AWS_MAX_IO_THREADS"] = "64"  # number of threads for I/O
+    env["AWS_MAX_CONCURRENT_REQUESTS"] = "256"
+    env["AWS_MAX_IO_THREADS"] = "64"
 
     try:
-        # Use subprocess.Popen for real-time output processing
         process = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
@@ -216,22 +129,18 @@ def copy_s3_local(
             env=env,
         )
 
-        # Count files as they're downloaded
         file_count = 0
         pbar = tqdm(
-            unit=" items ", dynamic_ncols=True, desc="Fetching remote stac items"
+            unit=" items", dynamic_ncols=True, desc="Fetching remote stac items"
         )
 
-        # Process stdout line by line in real-time
         for line in process.stdout:
             if "download:" in line or "copy:" in line:
                 file_count += 1
                 pbar.update(1)
 
-        # Close progress bar
         pbar.close()
 
-        # Wait for process to complete and check return code
         process.wait()
         if process.returncode != 0:
             error_output = process.stderr.read() if process.stderr else "Unknown error"
@@ -244,7 +153,6 @@ def copy_s3_local(
             "AWS CLI not found. Please install it: https://awscli.amazonaws.com/"
         )
 
-    # Count downloaded files
     downloaded_files = list(local_dir.rglob(f"*{suffix}"))
     total_downloaded = len(downloaded_files)
 
@@ -254,16 +162,18 @@ def copy_s3_local(
     return total_downloaded
 
 
-# -------------------
-# Ingest function
-# -------------------
+def read_stac_item(file_path: Path):
+    """Read a single STAC item from disk"""
+    with open(file_path, "rb") as f:
+        return orjson.loads(f.read())
+
+
 def ingest_stac_files(cfg):
-    # List STAC files
+    """Main ingestion function"""
     if cfg.source.startswith("s3://"):
         bucket, prefix = cfg.source[5:].split("/", 1)
         logger.info(f"Listing files in S3 bucket {bucket} with prefix {prefix}")
-        # all_files = list_s3_files(bucket, prefix, ".json")
-        # ALWAYS sync, faster than reading each from S3
+
         if not cfg.skip_download:
             copy_s3_local(
                 bucket=bucket,
@@ -271,31 +181,33 @@ def ingest_stac_files(cfg):
                 suffix=".json",
                 local_path=cfg.tmp_sync_dir,
             )
-        # Process files from the sync directory
         all_files = list(Path(cfg.tmp_sync_dir).glob("*.json"))
-        fs_read = None
     else:
         all_files = list(Path(cfg.source).glob("*.json"))
-        fs_read = None
+
+    if not all_files:
+        logger.warning("No STAC files found to process")
+        return
 
     buffers = {}  # buffers[tiling_system][mission][tile_id][year] = list[bytes]
-
-    # Flush year.ndjson after it accumulates more than 10k items
-    FLUSH_THRESHOLD = 10_000
-
-    # Keep counters for each buffer to know when to flush
     buffer_counts = defaultdict(int)
+    FLUSH_THRESHOLD = 10_000
 
     # Process files in parallel
     with ThreadPoolExecutor(max_workers=cfg.workers) as exe:
-        futures = {}
-        for file_path in all_files:
-            futures[exe.submit(read_stac_item, file_path, fs_read)] = file_path
+        futures = {
+            exe.submit(read_stac_item, file_path): file_path for file_path in all_files
+        }
 
         for future in tqdm(
             as_completed(futures), total=len(all_files), desc="Processing files"
         ):
-            stac_item = future.result()
+            try:
+                stac_item = future.result()
+            except Exception as e:
+                logger.error(f"Failed to read {futures[future]}: {str(e)}")
+                continue
+
             props = stac_item.get("properties", {})
             lat = props.get("latitude")
             lon = props.get("longitude")
@@ -332,125 +244,184 @@ def ingest_stac_files(cfg):
                     buffer_counts[(tiling_system, mission, tile_id, year)] = 0
 
                     batch_items_to_disk(
-                        items,
-                        cfg.batch_dir,
-                        tiling_system,
-                        mission,
-                        tile_id,
-                        year,
-                        format=cfg.output_format,
+                        items, cfg.batch_dir, tiling_system, mission, tile_id, year
                     )
-        # Final flush of any remaining items
-        for tiling_system, missions in buffers.items():
-            for mission, tiles in missions.items():
-                for tile_id, years in tiles.items():
-                    for year, items in years.items():
-                        if not items:
-                            continue
+
+    # Final flush of any remaining items
+    for tiling_system, missions in buffers.items():
+        for mission, tiles in missions.items():
+            for tile_id, years in tiles.items():
+                for year, items in years.items():
+                    if items:
                         batch_items_to_disk(
-                            items,
-                            cfg.batch_dir,
-                            tiling_system,
-                            mission,
-                            tile_id,
-                            year,
-                            format=cfg.output_format,
+                            items, cfg.batch_dir, tiling_system, mission, tile_id, year
                         )
 
-    # Convert to geoparquet if requested and output is local
-    if (
-        cfg.output_format == "geoparquet"
-        and cfg.output
-        and not cfg.output.startswith("s3://")
-    ):
-        convert_local_ndjson_to_geoparquet(str(cfg.batch_dir), cfg.output)
+    # Handle output
+    if cfg.output:
+        if cfg.output.startswith("s3://"):
+            # S3 output - sync only if upload not skipped
+            if not cfg.skip_upload:
+                logger.info(f"Syncing local data to {cfg.output}")
+                sync_to_s3(str(cfg.batch_dir), cfg.output, format=cfg.output_format)
+                logger.info("✅ Sync to S3 complete")
+        else:
+            # Local output - convert to geoparquet if requested
+            if cfg.output_format == "geoparquet":
+                logger.info(f"Converting to GeoParquet in {cfg.output}")
+                convert_local_ndjson_to_geoparquet(str(cfg.batch_dir), cfg.output)
 
 
-def read_stac_item(file_path, fs=None):
-    if isinstance(file_path, Path):
-        with open(file_path, "rb") as f:
-            return orjson.loads(f.read())
-    else:
-        with fs.open(file_path, "rb") as f:
-            return orjson.loads(f.read())
-
-
-def sync_append(local_root: str, s3_prefix: str, format="ndjson"):
+def sync_to_s3(local_root: str, s3_prefix: str, format="ndjson"):
     """
-    Walks local_root recursively.
-    For each file: if it exists in S3, download, append local content, and upload back.
-                   if it doesn't exist, just upload.
+    Sync local ndjson files to S3.
+    For ndjson: append to existing files or create new ones.
+    For geoparquet: convert and merge with existing parquet files.
     """
     s3 = boto3.client("s3")
     bucket, key_prefix = s3_prefix[5:].split("/", 1)
 
-    for path in Path(local_root).rglob("*.ndjson"):
-        rel_path = path.relative_to(local_root)
-        key = f"{key_prefix}/{rel_path.as_posix()}"
+    ndjson_files = list(Path(local_root).rglob("*.ndjson"))
 
-        if format == "geoparquet":
-            # Handle GeoParquet translation and upload using rustac
-            try:
-                success = asyncio.run(
-                    translate_ndjson_to_geoparquet_s3(path, bucket, key)
-                )
-                if not success:
-                    logger.error(f"Failed to process {path}")
-            except Exception as e:
-                logger.error(f"Error processing {path}: {str(e)}")
-        else:  # ndjson format
-            with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
-                tmp_path = Path(tmp_file.name)
+    if not ndjson_files:
+        logger.warning("No files to sync")
+        return
 
-            try:
-                # try to download existing file
-                try:
-                    s3.download_file(bucket, key, str(tmp_path))
-                    # append local content
-                    with open(tmp_path, "ab") as f:
-                        f.write(path.read_bytes())
-                except botocore.exceptions.ClientError as e:
-                    code = e.response.get("Error", {}).get("Code", "")
-                    if code not in ("404", "NoSuchKey", "NotFound"):
-                        raise
-                    # doesn't exist — just copy local file
-                    tmp_path.write_bytes(path.read_bytes())
+    logger.info(f"Syncing {len(ndjson_files)} files to S3")
 
-                # upload merged or new file
-                s3.upload_file(str(tmp_path), bucket, key)
-            finally:
-                tmp_path.unlink(missing_ok=True)
-
-
-async def translate_ndjson_to_geoparquet_s3(local_file_path, s3_bucket, s3_key):
-    """
-    Translate local ndjson file to geoparquet and upload to S3 using rustac library.
-    """
-    try:
-        # Create S3 store for reading (source)
+    if format == "geoparquet":
         read_store = S3Store(
-            bucket=s3_bucket,
-            prefix="",  # Empty prefix as we're working with specific keys
-            region="us-west-2",  # Adjust region as needed
+            bucket=bucket,
+            prefix="",
+            region="us-west-2",
             client_options={"timeout": "4m"},
             skip_signature=True,
         )
-        # Create S3 store for writing (destination)
         write_store = S3Store(
-            bucket=s3_bucket,
-            prefix="",  # Empty prefix as we're working with specific keys
-            region="us-west-2",  # Adjust region as needed
+            bucket=bucket,
+            prefix="",
+            region="us-west-2",
             client_options={"timeout": "8m"},
         )
-        # Read the local ndjson file using rustac
-        local_path_str = str(local_file_path)
-        stac_data = await rustac.read(local_path_str, store=None)
+
+        # Process all files in a single async context
+        asyncio.run(
+            process_geoparquet_batch(
+                ndjson_files, local_root, bucket, key_prefix, read_store, write_store
+            )
+        )
+    else:
+        # ndjson format
+        for path in tqdm(ndjson_files, desc=f"Syncing to S3 (ndjson)"):
+            rel_path = path.relative_to(local_root)
+            key = f"{key_prefix}/{rel_path.as_posix()}"
+            try:
+                upload_ndjson_with_merge(s3, path, bucket, key)
+            except Exception as e:
+                logger.error(f"Error processing {path}: {str(e)}")
+
+
+def upload_ndjson_with_merge(s3, local_path: Path, bucket: str, key: str):
+    """Upload ndjson file to S3, merging with existing file if present"""
+    with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+        tmp_path = Path(tmp_file.name)
+
+    try:
+        try:
+            s3.download_file(bucket, key, str(tmp_path))
+            # Append local content
+            with open(tmp_path, "ab") as f:
+                f.write(local_path.read_bytes())
+        except botocore.exceptions.ClientError as e:
+            code = e.response.get("Error", {}).get("Code", "")
+            if code not in ("404", "NoSuchKey", "NotFound"):
+                raise
+            tmp_path.write_bytes(local_path.read_bytes())
+
+        s3.upload_file(str(tmp_path), bucket, key)
+    finally:
+        tmp_path.unlink(missing_ok=True)
+
+
+async def process_geoparquet_batch(
+    ndjson_files, local_root, bucket, key_prefix, read_store, write_store
+):
+    semaphore = asyncio.Semaphore(40)
+
+    all_stats = []
+
+    async def process_with_semaphore(path):
+        async with semaphore:
+            rel_path = path.relative_to(local_root)
+            key = f"{key_prefix}/{rel_path.as_posix()}"
+            success, stats = await translate_and_upload_geoparquet(
+                path, bucket, key, read_store, write_store
+            )
+            if success and stats:
+                all_stats.append(stats)
+            return success
+
+    tasks = [process_with_semaphore(path) for path in ndjson_files]
+
+    # Process all files concurrently with progress bar
+    successful = 0
+    failed = 0
+
+    for coro in tqdm(
+        asyncio.as_completed(tasks), total=len(tasks), desc="Syncing to S3 (geoparquet)"
+    ):
+        try:
+            success = await coro
+            if success:
+                successful += 1
+            else:
+                failed += 1
+        except Exception as e:
+            failed += 1
+            logger.error(f"Error processing file: {str(e)}")
+
+    total_stats = {
+        "files_processed": successful,
+        "files_failed": failed,
+        "existing_items": sum(s["existing_count"] for s in all_stats),
+        "new_items": sum(s["new_count"] for s in all_stats),
+        "added_items": sum(s["added_count"] for s in all_stats),
+        "updated_items": sum(s["updated_count"] for s in all_stats),
+        "final_items": sum(s["final_count"] for s in all_stats),
+    }
+
+    print("-" * 60)
+    print("GeoParquet Sync Summary:")
+    print(f"  Files processed:    {total_stats['files_processed']}")
+    print(f"  Files failed:       {total_stats['files_failed']}")
+    print(f"  Existing items:     {total_stats['existing_items']:,}")
+    print(f"  New items:          {total_stats['new_items']:,}")
+    print(f"  Items added:        {total_stats['added_items']:,}")
+    print(f"  Items updated:      {total_stats['updated_items']:,}")
+    print(f"  Final total items:  {total_stats['final_items']:,}")
+    print("-" * 60)
+
+
+async def translate_and_upload_geoparquet(
+    local_file_path: Path,
+    s3_bucket: str,
+    s3_key: str,
+    read_store: S3Store,
+    write_store: S3Store,
+):
+    """
+    Convert local ndjson to geoparquet and upload to S3, merging with existing data.
+    Uses pre-created stores for connection pooling.
+    Deduplicates by STAC item 'id' field.
+    Returns: (success: bool, stats: dict or None)
+    """
+    try:
+        stac_data = await rustac.read(str(local_file_path), store=None)
 
         # Convert s3_key from .ndjson to .parquet
         parquet_s3_key = s3_key.replace(".ndjson", ".parquet")
         parquet_s3_path = f"s3://{s3_bucket}/{parquet_s3_key}"
 
-        # Normalize new data to features list
         if stac_data["type"] == "Feature":
             new_features = [stac_data]
         elif stac_data["type"] == "FeatureCollection":
@@ -458,11 +429,17 @@ async def translate_ndjson_to_geoparquet_s3(local_file_path, s3_bucket, s3_key):
         else:
             new_features = [stac_data]
 
-        # Try to read existing parquet file from S3 and append
+        stats = {
+            "existing_count": 0,
+            "new_count": len(new_features),
+            "added_count": 0,
+            "updated_count": 0,
+            "final_count": 0,
+        }
+
         try:
             existing_data = await rustac.read(parquet_s3_path, store=read_store)
 
-            # Extract existing features
             if existing_data["type"] == "Feature":
                 old_features = [existing_data]
             elif existing_data["type"] == "FeatureCollection":
@@ -470,14 +447,32 @@ async def translate_ndjson_to_geoparquet_s3(local_file_path, s3_bucket, s3_key):
             else:
                 old_features = []
 
-            # Append new features to old features
-            merged_features = old_features + new_features
+            stats["existing_count"] = len(old_features)
+
+            # Deduplicate by 'id' field
+            existing_by_id = {f.get("id"): f for f in old_features if f.get("id")}
+
+            for feature in new_features:
+                feature_id = feature.get("id")
+                if feature_id:
+                    if feature_id in existing_by_id:
+                        stats["updated_count"] += 1
+                    else:
+                        stats["added_count"] += 1
+                    existing_by_id[feature_id] = feature
+                else:
+                    logger.warning(f"Feature without 'id' field in {local_file_path}")
+
+            merged_features = list(existing_by_id.values())
 
         except Exception:
-            # If file doesn't exist or can't be read, use new data only
+            # File doesn't exist, use new data only
             merged_features = new_features
+            stats["added_count"] = len(new_features)
 
-        # Write merged features to S3 as geoparquet
+        stats["final_count"] = len(merged_features)
+
+        # Write to S3 as geoparquet
         await rustac.write(
             parquet_s3_path,
             merged_features,
@@ -485,11 +480,77 @@ async def translate_ndjson_to_geoparquet_s3(local_file_path, s3_bucket, s3_key):
             store=write_store,
         )
 
-        return True
+        return True, stats
+
     except Exception as e:
         logger.error(
             f"Failed to translate and upload {local_file_path} to {s3_key}: {str(e)}"
         )
+        return False, None
+
+
+def convert_local_ndjson_to_geoparquet(local_root: str, local_output_dir: str):
+    """Convert all local ndjson files to geoparquet files"""
+    ndjson_files = list(Path(local_root).rglob("*.ndjson"))
+
+    if not ndjson_files:
+        logger.warning("No ndjson files to convert")
+        return
+
+    logger.info(f"Converting {len(ndjson_files)} ndjson files to geoparquet")
+
+    successful = 0
+    failed = 0
+
+    for ndjson_file in tqdm(ndjson_files, desc="Converting to GeoParquet"):
+        try:
+            success = asyncio.run(
+                translate_ndjson_to_geoparquet_local(ndjson_file, local_output_dir)
+            )
+            if success:
+                successful += 1
+            else:
+                failed += 1
+        except Exception as e:
+            failed += 1
+            logger.error(f"Error processing {ndjson_file}: {str(e)}")
+
+    logger.info(
+        f"GeoParquet conversion complete: {successful} successful, {failed} failed"
+    )
+
+
+async def translate_ndjson_to_geoparquet_local(
+    local_ndjson_path: Path, local_output_dir: str
+):
+    """Convert local ndjson file to geoparquet"""
+    try:
+        # Read the local ndjson file
+        stac_data = await rustac.read(str(local_ndjson_path), store=None)
+
+        # Create output path with .parquet extension
+        relative_path = local_ndjson_path.relative_to(
+            local_ndjson_path.parent.parent.parent.parent
+        )
+        parquet_output_path = Path(local_output_dir) / relative_path
+        parquet_output_path = parquet_output_path.with_suffix(".parquet")
+
+        # Create parent directories
+        parquet_output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Write as geoparquet
+        await rustac.write(
+            str(parquet_output_path), stac_data, format="parquet", store=None
+        )
+
+        if logging.getLogger().isEnabledFor(logging.INFO):
+            logger.info(
+                f"Successfully converted {local_ndjson_path} to {parquet_output_path}"
+            )
+        return True
+
+    except Exception as e:
+        logger.error(f"Failed to translate {local_ndjson_path} to geoparquet: {str(e)}")
         return False
 
 
@@ -524,16 +585,22 @@ class Config:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--source", required=True)
+    parser = argparse.ArgumentParser(
+        description="Ingest STAC items and organize by tiling system"
+    )
+    parser.add_argument("--source", required=True, help="Source path (local or s3://)")
     parser.add_argument(
         "--sync-directory",
         default="/tmp/stac_ingest/local_synced_data/",
-        help="Local directory to store batches",
+        help="Local directory to sync S3 source files",
     )
-    parser.add_argument("--output")
-    parser.add_argument("--skip-upload", action="store_true")
-    parser.add_argument("--skip-download", action="store_true")
+    parser.add_argument("--output", help="Output path (local or s3://)")
+    parser.add_argument(
+        "--skip-upload", action="store_true", help="Skip upload to output"
+    )
+    parser.add_argument(
+        "--skip-download", action="store_true", help="Skip download from S3 source"
+    )
     parser.add_argument(
         "--workers", type=int, default=8, help="Number of worker threads"
     )
@@ -552,7 +619,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # Setup logging with the specified level
+    # Setup logging
     logger = setup_logging(getattr(logging, args.log_level))
 
     cfg = Config(
@@ -565,4 +632,5 @@ if __name__ == "__main__":
         sync_data=args.sync_directory,
         log_level=args.log_level,
     )
+
     ingest_stac_files(cfg)
