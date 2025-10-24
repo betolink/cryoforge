@@ -54,6 +54,7 @@ dependencies = [
   "tenacity",
   "pystac-client",
   "pyproj",
+  "rich-click",
   "orjson",
 ]
 
