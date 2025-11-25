@@ -83,6 +83,8 @@ def generate_nsidc_metadata_files(ds, filename, version):
     # Radar data:
     S1A = "S1A"
     S1B = "S1B"
+    S1C = "S1C"
+    S1D = "S1D"
 
     PlatformSensor = collections.namedtuple("PM", ["platform", "sensor"])
 
@@ -96,6 +98,8 @@ def generate_nsidc_metadata_files(ds, filename, version):
         L4: PlatformSensor("LANDSAT-4", "TM"),
         S1A: PlatformSensor("SENTINEL-1", "Sentinel-1A"),
         S1B: PlatformSensor("SENTINEL-1", "Sentinel-1B"),
+        S1C: PlatformSensor("SENTINEL-1", "Sentinel-1C"),
+        S1D: PlatformSensor("SENTINEL-1", "Sentinel-1D"),
         S2A: PlatformSensor("SENTINEL-2", "Sentinel-2A"),
         S2B: PlatformSensor("SENTINEL-2", "Sentinel-2B"),
     }
