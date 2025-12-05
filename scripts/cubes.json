@@ -1,0 +1,77 @@
+{
+    "id": "itslive-cubes",
+    "type": "Collection",
+    "stac_version": "1.1.0",
+    "description": "ITS_LIVE Global Ice Velocity STAC catalog for cloud optimized Zarr cubes",
+    "stac_extensions": [
+        "https://stac-extensions.github.io/projection/v2.0.0/schema.json",
+        "https://stac-extensions.github.io/alternate-assets/v1.2.0/schema.json",
+        "https://stac-extensions.github.io/version/v1.2.0/schema.json",
+        "https://stac-extensions.github.io/processing/v1.0.0/schema.json",
+        "https://stac-extensions.github.io/sat/v1.1.0/schema.json"
+    ],
+    "title": "ITS_LIVE Glacier Velocity Zarr cubes",
+    "license": "CC-BY-4.0",
+    "keywords": [
+        "ice velocity",
+        "landsat",
+        "remote sensing",
+        "climate change",
+        "glaciers",
+        "ice sheets",
+        "land ice"
+    ],
+    "providers": [
+        {
+            "name": "NASA MEaSUREs ITS_LIVE",
+            "roles": ["producer", "licensor"],
+            "url": "https://its-live.jpl.nasa.gov/"
+        }
+    ],
+    "extent": {
+        "spatial": {
+            "bbox": [[-180, -90, 180, 90]]
+        },
+        "temporal": {
+            "interval": [["1984-01-01T00:00:00Z", "2025-06-01T23:59:59Z"]]
+        }
+    },
+    "summaries": {
+        "eo:bands": [
+            {
+                "name": "v",
+                "description": "Ice velocity measurement in meters per year"
+            },
+            {
+                "name": "v_error",
+                "description": "Ice velocity magnitude error"
+            },
+            {
+                "name": "v_y",
+                "description": "Ice velocity component in y direction"
+            },
+            {
+                "name": "v_x",
+                "description": "Ice velocity component in x direction"
+            },
+            {
+                "name": "interp_mask",
+                "description": "True where velocity values have been interpolated"
+            },
+            {
+                "name": "img_pair_info",
+                "description": "File attributes"
+            }
+        ],
+        "proj:code": ["EPSG:3413",
+                      "EPSG:4326",
+                      "EPSG:3031"]
+    },
+    "links": [
+        {
+            "rel": "root",
+            "href": "./collection.json",
+            "type": "application/json"
+        }
+    ]
+}

@@ -1,0 +1,1971 @@
+{
+  "type": "Feature",
+  "stac_version": "1.1.0",
+  "stac_extensions": [
+    "https://stac-extensions.github.io/projection/v2.0.0/schema.json",
+    "https://stac-extensions.github.io/datacube/v2.2.0/schema.json",
+    "https://stac-extensions.github.io/raster/v1.1.0/schema.json"
+  ],
+  "id": "itslive-6136bc63-5a75-475c-84fb-a2d0471e5147",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          -79.1997526825828,
+          -2.7125784142343186
+        ],
+        [
+          -78.30388845029773,
+          -2.7125784142343186
+        ],
+        [
+          -78.30388845029773,
+          -1.8086390262798309
+        ],
+        [
+          -79.1997526825828,
+          -1.8086390262798309
+        ],
+        [
+          -79.1997526825828,
+          -2.7125784142343186
+        ]
+      ]
+    ]
+  },
+  "bbox": [
+    -79.1997526825828,
+    -2.7125784142343186,
+    -78.30388845029773,
+    -1.8086390262798309
+  ],
+  "properties": {
+    "start_datetime": "2016-04-28T23:36:30.722953216",
+    "end_datetime": "2021-12-16T23:36:33.557084928",
+    "title": "ITS_LIVE datacube of image pair velocities",
+    "description": "ITS_LIVE datacube of image pair velocities",
+    "proj:code": "EPSG:32717",
+    "proj:bbox": [
+      700132.5,
+      9700027.5,
+      799972.5,
+      9799867.5
+    ],
+    "proj:shape": [
+      833,
+      833
+    ],
+    "cube:dimensions": {
+      "x": {
+        "type": "spatial",
+        "axis": "x",
+        "extent": [
+          700132.5,
+          799972.5
+        ],
+        "reference_system": 32717
+      },
+      "y": {
+        "type": "spatial",
+        "axis": "y",
+        "extent": [
+          9700027.5,
+          9799867.5
+        ],
+        "reference_system": 32717
+      },
+      "mid_date": {
+        "type": "temporal",
+        "extent": [
+          "2016-04-28T23:36:30.722953216",
+          "2021-12-16T23:36:33.557084928"
+        ]
+      }
+    },
+    "cube:variables": {
+      "M11": {
+        "type": "data",
+        "dimensions": [
+          "mid_date",
+          "y",
+          "x"
+        ],
+        "description": "M11",
+        "unit": "pixel/(meter/year)"
+      },
+      "M11_dr_to_vr_factor": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "M11_dr_to_vr_factor",
+        "unit": "meter/(year*pixel)"
+      },
+      "M12": {
+        "type": "data",
+        "dimensions": [
+          "mid_date",
+          "y",
+          "x"
+        ],
+        "description": "M12",
+        "unit": "pixel/(meter/year)"
+      },
+      "M12_dr_to_vr_factor": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "M12_dr_to_vr_factor",
+        "unit": "meter/(year*pixel)"
+      },
+      "acquisition_date_img1": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "acquisition_date_img1"
+      },
+      "acquisition_date_img2": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "acquisition_date_img2"
+      },
+      "autoRIFT_software_version": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "autoRIFT_software_version"
+      },
+      "chip_size_height": {
+        "type": "data",
+        "dimensions": [
+          "mid_date",
+          "y",
+          "x"
+        ],
+        "description": "chip_size_height",
+        "unit": "m"
+      },
+      "chip_size_width": {
+        "type": "data",
+        "dimensions": [
+          "mid_date",
+          "y",
+          "x"
+        ],
+        "description": "chip_size_width",
+        "unit": "m"
+      },
+      "date_center": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "date_center"
+      },
+      "date_dt": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "date_dt"
+      },
+      "floatingice": {
+        "type": "data",
+        "dimensions": [
+          "y",
+          "x"
+        ],
+        "description": "floatingice"
+      },
+      "granule_url": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "granule_url"
+      },
+      "interp_mask": {
+        "type": "data",
+        "dimensions": [
+          "mid_date",
+          "y",
+          "x"
+        ],
+        "description": "interp_mask"
+      },
+      "landice": {
+        "type": "data",
+        "dimensions": [
+          "y",
+          "x"
+        ],
+        "description": "landice"
+      },
+      "mapping": {
+        "type": "data",
+        "dimensions": [],
+        "description": "mapping"
+      },
+      "mission_img1": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "mission_img1"
+      },
+      "mission_img2": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "mission_img2"
+      },
+      "roi_valid_percentage": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "roi_valid_percentage"
+      },
+      "satellite_img1": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "satellite_img1"
+      },
+      "satellite_img2": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "satellite_img2"
+      },
+      "sensor_img1": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "sensor_img1"
+      },
+      "sensor_img2": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "sensor_img2"
+      },
+      "stable_count_slow": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "stable_count_slow",
+        "unit": "count"
+      },
+      "stable_count_stationary": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "stable_count_stationary",
+        "unit": "count"
+      },
+      "stable_shift_flag": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "stable_shift_flag"
+      },
+      "v": {
+        "type": "data",
+        "dimensions": [
+          "mid_date",
+          "y",
+          "x"
+        ],
+        "description": "v",
+        "unit": "meter/year"
+      },
+      "v_error": {
+        "type": "data",
+        "dimensions": [
+          "mid_date",
+          "y",
+          "x"
+        ],
+        "description": "v_error",
+        "unit": "meter/year"
+      },
+      "va": {
+        "type": "data",
+        "dimensions": [
+          "mid_date",
+          "y",
+          "x"
+        ],
+        "description": "va",
+        "unit": "meter/year"
+      },
+      "va_error": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "va_error",
+        "unit": "meter/year"
+      },
+      "va_error_modeled": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "va_error_modeled",
+        "unit": "meter/year"
+      },
+      "va_error_slow": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "va_error_slow",
+        "unit": "meter/year"
+      },
+      "va_error_stationary": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "va_error_stationary",
+        "unit": "meter/year"
+      },
+      "va_stable_shift": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "va_stable_shift",
+        "unit": "meter/year"
+      },
+      "va_stable_shift_slow": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "va_stable_shift_slow",
+        "unit": "meter/year"
+      },
+      "va_stable_shift_stationary": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "va_stable_shift_stationary",
+        "unit": "meter/year"
+      },
+      "vr": {
+        "type": "data",
+        "dimensions": [
+          "mid_date",
+          "y",
+          "x"
+        ],
+        "description": "vr",
+        "unit": "meter/year"
+      },
+      "vr_error": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "vr_error",
+        "unit": "meter/year"
+      },
+      "vr_error_modeled": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "vr_error_modeled",
+        "unit": "meter/year"
+      },
+      "vr_error_slow": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "vr_error_slow",
+        "unit": "meter/year"
+      },
+      "vr_error_stationary": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "vr_error_stationary",
+        "unit": "meter/year"
+      },
+      "vr_stable_shift": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "vr_stable_shift",
+        "unit": "meter/year"
+      },
+      "vr_stable_shift_slow": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "vr_stable_shift_slow",
+        "unit": "meter/year"
+      },
+      "vr_stable_shift_stationary": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "vr_stable_shift_stationary",
+        "unit": "meter/year"
+      },
+      "vx": {
+        "type": "data",
+        "dimensions": [
+          "mid_date",
+          "y",
+          "x"
+        ],
+        "description": "vx",
+        "unit": "meter/year"
+      },
+      "vx_error": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "vx_error",
+        "unit": "meter/year"
+      },
+      "vx_error_modeled": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "vx_error_modeled",
+        "unit": "meter/year"
+      },
+      "vx_error_slow": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "vx_error_slow",
+        "unit": "meter/year"
+      },
+      "vx_error_stationary": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "vx_error_stationary",
+        "unit": "meter/year"
+      },
+      "vx_stable_shift": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "vx_stable_shift",
+        "unit": "meter/year"
+      },
+      "vx_stable_shift_slow": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "vx_stable_shift_slow",
+        "unit": "meter/year"
+      },
+      "vx_stable_shift_stationary": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "vx_stable_shift_stationary",
+        "unit": "meter/year"
+      },
+      "vy": {
+        "type": "data",
+        "dimensions": [
+          "mid_date",
+          "y",
+          "x"
+        ],
+        "description": "vy",
+        "unit": "meter/year"
+      },
+      "vy_error": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "vy_error",
+        "unit": "meter/year"
+      },
+      "vy_error_modeled": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "vy_error_modeled",
+        "unit": "meter/year"
+      },
+      "vy_error_slow": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "vy_error_slow",
+        "unit": "meter/year"
+      },
+      "vy_error_stationary": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "vy_error_stationary",
+        "unit": "meter/year"
+      },
+      "vy_stable_shift": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "vy_stable_shift",
+        "unit": "meter/year"
+      },
+      "vy_stable_shift_slow": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "vy_stable_shift_slow",
+        "unit": "meter/year"
+      },
+      "vy_stable_shift_stationary": {
+        "type": "data",
+        "dimensions": [
+          "mid_date"
+        ],
+        "description": "vy_stable_shift_stationary",
+        "unit": "meter/year"
+      }
+    },
+    "datetime": null
+  },
+  "links": [
+    {
+      "rel": "root",
+      "href": "/home/jovyan/catalog_out/catalog.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "parent",
+      "href": "/home/jovyan/catalog_out/catalog.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "self",
+      "href": "/home/jovyan/catalog_out/itslive-6136bc63-5a75-475c-84fb-a2d0471e5147/itslive-6136bc63-5a75-475c-84fb-a2d0471e5147.json",
+      "type": "application/json"
+    }
+  ],
+  "assets": {
+    "zarr": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "ITS_LIVE Zarr datacube",
+      "roles": [
+        "data"
+      ]
+    },
+    "M11": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "M11",
+      "raster:bands": [
+        {
+          "name": "M11",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "pixel/(meter/year)"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        },
+        "y": {
+          "type": "spatial"
+        },
+        "x": {
+          "type": "spatial"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "M11_dr_to_vr_factor": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "M11_dr_to_vr_factor",
+      "raster:bands": [
+        {
+          "name": "M11_dr_to_vr_factor",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/(year*pixel)"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "M12": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "M12",
+      "raster:bands": [
+        {
+          "name": "M12",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "pixel/(meter/year)"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        },
+        "y": {
+          "type": "spatial"
+        },
+        "x": {
+          "type": "spatial"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "M12_dr_to_vr_factor": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "M12_dr_to_vr_factor",
+      "raster:bands": [
+        {
+          "name": "M12_dr_to_vr_factor",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/(year*pixel)"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "acquisition_date_img1": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "acquisition_date_img1",
+      "raster:bands": [
+        {
+          "name": "acquisition_date_img1",
+          "description": "",
+          "sampling": "point",
+          "data_type": "datetime64[ns]"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "acquisition_date_img2": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "acquisition_date_img2",
+      "raster:bands": [
+        {
+          "name": "acquisition_date_img2",
+          "description": "",
+          "sampling": "point",
+          "data_type": "datetime64[ns]"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "autoRIFT_software_version": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "autoRIFT_software_version",
+      "raster:bands": [
+        {
+          "name": "autoRIFT_software_version",
+          "description": "",
+          "sampling": "point",
+          "data_type": "<U5"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "chip_size_height": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "chip_size_height",
+      "raster:bands": [
+        {
+          "name": "chip_size_height",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "m"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        },
+        "y": {
+          "type": "spatial"
+        },
+        "x": {
+          "type": "spatial"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "chip_size_width": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "chip_size_width",
+      "raster:bands": [
+        {
+          "name": "chip_size_width",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "m"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        },
+        "y": {
+          "type": "spatial"
+        },
+        "x": {
+          "type": "spatial"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "date_center": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "date_center",
+      "raster:bands": [
+        {
+          "name": "date_center",
+          "description": "",
+          "sampling": "point",
+          "data_type": "datetime64[ns]"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "date_dt": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "date_dt",
+      "raster:bands": [
+        {
+          "name": "date_dt",
+          "description": "",
+          "sampling": "point",
+          "data_type": "timedelta64[ns]"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "floatingice": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "floatingice",
+      "raster:bands": [
+        {
+          "name": "floatingice",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32"
+        }
+      ],
+      "cube:dimensions": {
+        "y": {
+          "type": "spatial"
+        },
+        "x": {
+          "type": "spatial"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "granule_url": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "granule_url",
+      "raster:bands": [
+        {
+          "name": "granule_url",
+          "description": "",
+          "sampling": "point",
+          "data_type": "<U1024"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "interp_mask": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "interp_mask",
+      "raster:bands": [
+        {
+          "name": "interp_mask",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        },
+        "y": {
+          "type": "spatial"
+        },
+        "x": {
+          "type": "spatial"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "landice": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "landice",
+      "raster:bands": [
+        {
+          "name": "landice",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32"
+        }
+      ],
+      "cube:dimensions": {
+        "y": {
+          "type": "spatial"
+        },
+        "x": {
+          "type": "spatial"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "mapping": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "mapping",
+      "raster:bands": [
+        {
+          "name": "mapping",
+          "description": "",
+          "sampling": "point",
+          "data_type": "<U1"
+        }
+      ],
+      "cube:dimensions": {},
+      "roles": [
+        "data"
+      ]
+    },
+    "mission_img1": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "mission_img1",
+      "raster:bands": [
+        {
+          "name": "mission_img1",
+          "description": "",
+          "sampling": "point",
+          "data_type": "<U1"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "mission_img2": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "mission_img2",
+      "raster:bands": [
+        {
+          "name": "mission_img2",
+          "description": "",
+          "sampling": "point",
+          "data_type": "<U1"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "roi_valid_percentage": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "roi_valid_percentage",
+      "raster:bands": [
+        {
+          "name": "roi_valid_percentage",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "satellite_img1": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "satellite_img1",
+      "raster:bands": [
+        {
+          "name": "satellite_img1",
+          "description": "",
+          "sampling": "point",
+          "data_type": "<U2"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "satellite_img2": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "satellite_img2",
+      "raster:bands": [
+        {
+          "name": "satellite_img2",
+          "description": "",
+          "sampling": "point",
+          "data_type": "<U2"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "sensor_img1": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "sensor_img1",
+      "raster:bands": [
+        {
+          "name": "sensor_img1",
+          "description": "",
+          "sampling": "point",
+          "data_type": "<U5"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "sensor_img2": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "sensor_img2",
+      "raster:bands": [
+        {
+          "name": "sensor_img2",
+          "description": "",
+          "sampling": "point",
+          "data_type": "<U5"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "stable_count_slow": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "stable_count_slow",
+      "raster:bands": [
+        {
+          "name": "stable_count_slow",
+          "description": "",
+          "sampling": "point",
+          "data_type": "uint16",
+          "units": "count"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "stable_count_stationary": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "stable_count_stationary",
+      "raster:bands": [
+        {
+          "name": "stable_count_stationary",
+          "description": "",
+          "sampling": "point",
+          "data_type": "uint16",
+          "units": "count"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "stable_shift_flag": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "stable_shift_flag",
+      "raster:bands": [
+        {
+          "name": "stable_shift_flag",
+          "description": "",
+          "sampling": "point",
+          "data_type": "uint8"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "v": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "v",
+      "raster:bands": [
+        {
+          "name": "v",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        },
+        "y": {
+          "type": "spatial"
+        },
+        "x": {
+          "type": "spatial"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "v_error": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "v_error",
+      "raster:bands": [
+        {
+          "name": "v_error",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        },
+        "y": {
+          "type": "spatial"
+        },
+        "x": {
+          "type": "spatial"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "va": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "va",
+      "raster:bands": [
+        {
+          "name": "va",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        },
+        "y": {
+          "type": "spatial"
+        },
+        "x": {
+          "type": "spatial"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "va_error": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "va_error",
+      "raster:bands": [
+        {
+          "name": "va_error",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "va_error_modeled": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "va_error_modeled",
+      "raster:bands": [
+        {
+          "name": "va_error_modeled",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "va_error_slow": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "va_error_slow",
+      "raster:bands": [
+        {
+          "name": "va_error_slow",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "va_error_stationary": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "va_error_stationary",
+      "raster:bands": [
+        {
+          "name": "va_error_stationary",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "va_stable_shift": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "va_stable_shift",
+      "raster:bands": [
+        {
+          "name": "va_stable_shift",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "va_stable_shift_slow": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "va_stable_shift_slow",
+      "raster:bands": [
+        {
+          "name": "va_stable_shift_slow",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "va_stable_shift_stationary": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "va_stable_shift_stationary",
+      "raster:bands": [
+        {
+          "name": "va_stable_shift_stationary",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "vr": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "vr",
+      "raster:bands": [
+        {
+          "name": "vr",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        },
+        "y": {
+          "type": "spatial"
+        },
+        "x": {
+          "type": "spatial"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "vr_error": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "vr_error",
+      "raster:bands": [
+        {
+          "name": "vr_error",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "vr_error_modeled": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "vr_error_modeled",
+      "raster:bands": [
+        {
+          "name": "vr_error_modeled",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "vr_error_slow": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "vr_error_slow",
+      "raster:bands": [
+        {
+          "name": "vr_error_slow",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "vr_error_stationary": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "vr_error_stationary",
+      "raster:bands": [
+        {
+          "name": "vr_error_stationary",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "vr_stable_shift": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "vr_stable_shift",
+      "raster:bands": [
+        {
+          "name": "vr_stable_shift",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "vr_stable_shift_slow": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "vr_stable_shift_slow",
+      "raster:bands": [
+        {
+          "name": "vr_stable_shift_slow",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "vr_stable_shift_stationary": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "vr_stable_shift_stationary",
+      "raster:bands": [
+        {
+          "name": "vr_stable_shift_stationary",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "vx": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "vx",
+      "raster:bands": [
+        {
+          "name": "vx",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        },
+        "y": {
+          "type": "spatial"
+        },
+        "x": {
+          "type": "spatial"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "vx_error": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "vx_error",
+      "raster:bands": [
+        {
+          "name": "vx_error",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "vx_error_modeled": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "vx_error_modeled",
+      "raster:bands": [
+        {
+          "name": "vx_error_modeled",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "vx_error_slow": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "vx_error_slow",
+      "raster:bands": [
+        {
+          "name": "vx_error_slow",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "vx_error_stationary": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "vx_error_stationary",
+      "raster:bands": [
+        {
+          "name": "vx_error_stationary",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "vx_stable_shift": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "vx_stable_shift",
+      "raster:bands": [
+        {
+          "name": "vx_stable_shift",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "vx_stable_shift_slow": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "vx_stable_shift_slow",
+      "raster:bands": [
+        {
+          "name": "vx_stable_shift_slow",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "vx_stable_shift_stationary": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "vx_stable_shift_stationary",
+      "raster:bands": [
+        {
+          "name": "vx_stable_shift_stationary",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "vy": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "vy",
+      "raster:bands": [
+        {
+          "name": "vy",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        },
+        "y": {
+          "type": "spatial"
+        },
+        "x": {
+          "type": "spatial"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "vy_error": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "vy_error",
+      "raster:bands": [
+        {
+          "name": "vy_error",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "vy_error_modeled": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "vy_error_modeled",
+      "raster:bands": [
+        {
+          "name": "vy_error_modeled",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "vy_error_slow": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "vy_error_slow",
+      "raster:bands": [
+        {
+          "name": "vy_error_slow",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "vy_error_stationary": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "vy_error_stationary",
+      "raster:bands": [
+        {
+          "name": "vy_error_stationary",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "vy_stable_shift": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "vy_stable_shift",
+      "raster:bands": [
+        {
+          "name": "vy_stable_shift",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "vy_stable_shift_slow": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "vy_stable_shift_slow",
+      "raster:bands": [
+        {
+          "name": "vy_stable_shift_slow",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    },
+    "vy_stable_shift_stationary": {
+      "href": "s3://its-live-data/datacubes/v2-updated-october2024/S00W070/ITS_LIVE_vel_EPSG32717_G0120_X750000_Y9750000.zarr",
+      "type": "application/vnd.zarr",
+      "title": "vy_stable_shift_stationary",
+      "raster:bands": [
+        {
+          "name": "vy_stable_shift_stationary",
+          "description": "",
+          "sampling": "point",
+          "data_type": "float32",
+          "units": "meter/year"
+        }
+      ],
+      "cube:dimensions": {
+        "mid_date": {
+          "type": "temporal"
+        }
+      },
+      "roles": [
+        "data"
+      ]
+    }
+  }
+}
