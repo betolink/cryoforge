@@ -22,10 +22,57 @@ import rustac
 import duckdb
 
 from typing import List
+import time
+import sys
+from functools import wraps
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Separate logger for profiling that goes to stderr
+profiling_logger = logging.getLogger("profile")
+profiling_logger.propagate = False  # Don't propagate to root logger
+profiling_logger.setLevel(logging.INFO)
+# Only add handler if not already present
+if not profiling_logger.handlers:
+    handler = logging.StreamHandler(sys.stderr)
+    handler.setFormatter(logging.Formatter("PROFILE: %(message)s"))
+    profiling_logger.addHandler(handler)
+
+
+# Profiling utilities
+def timed(prefix: str = ""):
+    """Decorator to time function execution and log to stderr."""
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            start = time.perf_counter()
+            result = func(*args, **kwargs)
+            elapsed = time.perf_counter() - start
+            profiling_logger.info(f"{prefix}{func.__name__}: {elapsed:.2f}s")
+            return result
+
+        return wrapper
+
+    return decorator
+
+
+class ProfileTimer:
+    """Context manager for timing code blocks."""
+
+    def __init__(self, name: str):
+        self.name = name
+        self.start = None
+
+    def __enter__(self):
+        self.start = time.perf_counter()
+        return self
+
+    def __exit__(self, *args):
+        elapsed = time.perf_counter() - self.start
+        profiling_logger.info(f"{self.name}: {elapsed:.2f}s")
 
 
 # Connect to DuckDB
@@ -204,6 +251,7 @@ def s3_path_to_local_path(s3_path, cache_root="/tmp/duck_cache"):
     return local_path
 
 
+@timed("s3_cache: ")
 def cache_parquet_file(
     s3_paths: List[str], cache_root: str = "/tmp/duck_cache"
 ) -> List[str]:
@@ -241,6 +289,7 @@ def extract_years_from_datetime_str(datetime_str):
     return [str(year) for year in range(int(start_year[0:4]), int(end_year[0:4]) + 1)]
 
 
+@timed("grid_pruning: ")
 def get_overlapping_grid_names(
     geojson_geometry: dict = {},
     base_href: str = "s3://its-live-data/test-space/stac/geoparquet/latlon",
@@ -248,6 +297,7 @@ def get_overlapping_grid_names(
     date_range: str = "all",
     resolution: int = 2,
     overlap: str = "overlap",
+    verify: bool = True,
 ):
     """
     Generates a list of S3 path prefixes corresponding to spatial grid tiles that overlap
@@ -323,9 +373,12 @@ def get_overlapping_grid_names(
                     grids.add(name)
 
         prefixes = [f"{base_href}/{p}/{i}" for p in missions for i in list(grids)]
-        search_prefixes = [
-            f"{path}/**/*.parquet" for path in prefixes if path_exists(path)
-        ]
+        if verify:
+            search_prefixes = [
+                f"{path}/**/*.parquet" for path in prefixes if path_exists(path)
+            ]
+        else:
+            search_prefixes = [f"{path}/**/*.parquet" for path in prefixes]
         return search_prefixes
     elif partition_type == "h3":
         grids_hex = h3.h3shape_to_cells_experimental(
@@ -337,9 +390,12 @@ def get_overlapping_grid_names(
         grids = [int(hs, 16) for hs in grids_hex]
         prefixes = [f"{base_href}/{p}" for p in grids]
         # TODO: implement year filtering
-        search_prefixes = [
-            f"{prefix}/**/*.parquet" for prefix in prefixes if path_exists(prefix)
-        ]
+        if verify:
+            search_prefixes = [
+                f"{prefix}/**/*.parquet" for prefix in prefixes if path_exists(prefix)
+            ]
+        else:
+            search_prefixes = [f"{prefix}/**/*.parquet" for prefix in prefixes]
         return search_prefixes
     else:
         raise NotImplementedError(f"Partition {partition_type} not implemented.")
@@ -407,6 +463,7 @@ def build_cql2_filter(filters_list):
     )
 
 
+@timed("search: ")
 def serverless_search(
     base_catalog_href: str = "s3://its-live-data/test-space/stac/geoparquet/latlon",
     search_kwargs: dict = {},
@@ -418,6 +475,7 @@ def serverless_search(
     overlap: str = "overlap",
     asset_type: str = ".nc",
     verbose: bool = False,
+    verify: bool = True,
 ):
     """
     Performs a serverless!! search over partitioned STAC catalogs stored in Parquet format for the ITS_LIVE project.
@@ -473,6 +531,7 @@ def serverless_search(
                 partition_type=partition_type,
                 resolution=resolution,
                 overlap=overlap,
+                verify=verify,
             )
     else:
         if partition_type == "latlon":
@@ -489,58 +548,113 @@ def serverless_search(
 
     filters = search_kwargs["filter"] if "filter" in search_kwargs else []
 
-    logger.debug(f"Searching in {search_prefixes} with filters: {filters} ")
-    hrefs = []
-    # TODO: this could run in parallel on a thread or could be passed all to DuckDB/rustac as a combined list of paths.
-    # for debugging purposes querying one by one is more convenient for now.
-    for prefix in search_prefixes:
-        try:
-            if engine == "duckdb":
-                # TODO: make it more flexible
-                filters_sql = filters_to_where(filters)
-                logger.debug(f"Filters as SQL: {filters_sql}")
-                geojson_str = json.dumps(search_kwargs["intersects"])
-                date_filter_sql = ""
-                if "datetime" in search_kwargs:
-                    date_range = search_kwargs["datetime"]
-                    start_date, end_date = date_range.split("/")
+    profiling_logger.info(
+        f"Searching in {len(search_prefixes)} prefixes with filters: {filters} "
+    )
 
-                    if start_date and end_date:
-                        date_filter_sql = f"AND datetime BETWEEN TIMESTAMP '{start_date}' AND TIMESTAMP '{end_date}'"
-                    elif start_date:
-                        date_filter_sql = f"AND datetime >= TIMESTAMP '{start_date}'"
-                    elif end_date:
-                        date_filter_sql = f"AND datetime <= TIMESTAMP '{end_date}'"
-                query = f"""
-                    SELECT 
-                        assets -> 'data' ->> 'href' AS data_href
-                    FROM read_parquet('{prefix}', union_by_name=true)
-                    WHERE ST_Intersects(
-                        geometry,
-                        ST_GeomFromGeoJSON('{geojson_str}')
+    hrefs = []
+    query_times = []
+    skipped_empty_cells = 0
+
+    with ProfileTimer("total_query_loop_time: "):
+        for idx, prefix in enumerate(search_prefixes):
+            query_start = time.perf_counter()
+            try:
+                if engine == "duckdb":
+                    filters_sql = filters_to_where(filters)
+                    logger.debug(f"Filters as SQL: {filters_sql}")
+                    geojson_str = json.dumps(search_kwargs["intersects"])
+                    date_filter_sql = ""
+                    if "datetime" in search_kwargs:
+                        date_range = search_kwargs["datetime"]
+                        start_date, end_date = date_range.split("/")
+
+                        if start_date and end_date:
+                            date_filter_sql = f"AND datetime BETWEEN TIMESTAMP '{start_date}' AND TIMESTAMP '{end_date}'"
+                        elif start_date:
+                            date_filter_sql = (
+                                f"AND datetime >= TIMESTAMP '{start_date}'"
+                            )
+                        elif end_date:
+                            date_filter_sql = f"AND datetime <= TIMESTAMP '{end_date}'"
+                    query = f"""
+                        SELECT
+                            assets -> 'data' ->> 'href' AS data_href
+                        FROM read_parquet('{prefix}', union_by_name=true)
+                        WHERE ST_Intersects(
+                            geometry,
+                            ST_GeomFromGeoJSON('{geojson_str}')
+                        )
+                        {date_filter_sql}
+                        AND {filters_sql}
+                    """
+                    if verbose:
+                        logger.debug(f"Running DuckDB query: {query}")
+
+                    # Time the DuckDB query execution
+                    duckdb_start = time.perf_counter()
+                    items = con.execute(query).df()
+                    duckdb_time = time.perf_counter() - duckdb_start
+
+                    links = items["data_href"].to_list()
+                    hrefs.extend(links)
+                    query_time = time.perf_counter() - query_start
+                    query_times.append(query_time)
+
+                    if verbose or (len(search_prefixes) < 50) or (idx % 50 == 0):
+                        h3_cell = (
+                            prefix.split("/")[-3] if "/**/" in prefix else "unknown"
+                        )
+                        profiling_logger.info(
+                            f"[{idx + 1}/{len(search_prefixes)}] H3:{h3_cell} | items: {len(links):,} | query_time: {query_time:.2f}s (duckdb: {duckdb_time:.2f}s)"
+                        )
+
+                elif engine == "rustac":
+                    search_kwargs_copy = search_kwargs.copy()
+                    search_kwargs_copy["filter"] = build_cql2_filter(filters)
+                    client = rustac.DuckdbClient()
+                    items = client.search(prefix, **search_kwargs_copy)
+                    for item in items:
+                        for asset in item["assets"].values():
+                            if "data" in asset["roles"] and asset["href"].endswith(
+                                ".nc"
+                            ):
+                                hrefs.append(asset["href"])
+                    query_time = time.perf_counter() - query_start
+                    query_times.append(query_time)
+
+                    if verbose:
+                        profiling_logger.info(
+                            f"Prefix: {prefix} | matching items: {len(items)}"
+                        )
+                else:
+                    raise NotImplementedError(f"Not a valid query engine: {engine}")
+
+            except Exception as e:
+                query_time = time.perf_counter() - query_start
+                # Suppress "No files found" errors when verify=False (expected behavior)
+                if not verify and "No files found" in str(e):
+                    skipped_empty_cells += 1
+                    logger.debug(f"Skipping empty H3 cell: {prefix[:80]}...")
+                else:
+                    logger.error(
+                        f"Error while searching in {prefix[:80]}... (after {query_time:.2f}s): {e}"
                     )
-                    {date_filter_sql}
-                    AND {filters_sql}
-                """
-                if verbose:
-                    logger.debug(f"Running DuckDB query: {query}")
-                items = con.execute(query).df()  # memory intensive?
-                links = items["data_href"].to_list()
-                hrefs.extend(links)
-            elif engine == "rustac":
-                # can we use include to only bring the asset links?
-                search_kwargs["filter"] = build_cql2_filter(filters)
-                client = rustac.DuckdbClient()
-                items = client.search(prefix, **search_kwargs)
-                for item in items:
-                    for asset in item["assets"].values():
-                        if "data" in asset["roles"] and asset["href"].endswith(".nc"):
-                            hrefs.append(asset["href"])
-            else:
-                raise NotImplementedError(f"Not a valid query engine: {engine}")
-            if verbose:
-                logger.info(f"Prefx: {prefix} | matching items: {len(items)}")
-        except Exception as e:
-            logger.error(f"Error while searching in {prefix}: {e}")
+
+    # Log summary statistics
+    if query_times or skipped_empty_cells > 0:
+        profiling_logger.info(
+            f"Query summary: {len(query_times)}/{len(search_prefixes)} successful"
+        )
+        if skipped_empty_cells > 0:
+            profiling_logger.info(f"  Skipped empty H3 cells: {skipped_empty_cells}")
+        profiling_logger.info(f"  Total query time: {sum(query_times):.2f}s")
+        if query_times:
+            profiling_logger.info(
+                f"  Avg query time: {sum(query_times) / len(query_times):.2f}s"
+            )
+            profiling_logger.info(f"  Min query time: {min(query_times):.2f}s")
+            profiling_logger.info(f"  Max query time: {max(query_times):.2f}s")
+        profiling_logger.info(f"  Total unique hrefs: {len(set(hrefs)):,}")
 
     return sorted(list(set(hrefs)))

@@ -62,6 +62,19 @@ def generate_cube_stac_items(input_filename: str, output_filename: str):
         geometry = feature.get("geometry", None)
         bbox = feature.get("bbox", None)
 
+        # Ensure geometry is not null - if missing, create from bbox or geometry_epsg
+        if geometry is None:
+            # Try to create geometry from geometry_epsg if available
+            if "geometry_epsg" in props:
+                geom_epsg = props["geometry_epsg"]
+                geometry = geom_epsg
+            else:
+                # Create a minimal geometry as fallback
+                geometry = {
+                    "type": "Polygon",
+                    "coordinates": [[[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]]
+                }
+
         # If no bbox in feature, calculate from geometry
         if bbox is None and geometry:
             coords = geometry["coordinates"][0]
@@ -90,8 +103,8 @@ def generate_cube_stac_items(input_filename: str, output_filename: str):
         zarr_filename = zarr_url.split("/")[-1].replace(".zarr", "")
         
         # Extract temporal extent from collection (default)
-        start_datetime = "2016-04-28T23:36:30.722953216Z"
-        end_datetime = "2021-12-16T23:36:33.557084928Z"
+        start_datetime = "2016-04-28T23:36:30.722953216+00:00"
+        end_datetime = "2021-12-16T23:36:33.557084928+00:00"
 
         # Create cube dimensions based on the example
         cube_dimensions = {
@@ -109,7 +122,7 @@ def generate_cube_stac_items(input_filename: str, output_filename: str):
             },
             "mid_date": {
                 "type": "temporal",
-                "extent": [start_datetime.replace("Z", ""), end_datetime.replace("Z", "")]
+                "extent": [start_datetime, end_datetime]
             }
         }
 
@@ -242,11 +255,11 @@ def generate_cube_stac_items(input_filename: str, output_filename: str):
 
         stac_items.append(stac_item)
 
-    # Wrap in a FeatureCollection and save
-    stac_catalog = {"type": "FeatureCollection", "features": stac_items}
-
+    # Save as NDJSON (newline-delimited JSON)
     with open(output_filename, "w") as f:
-        json.dump(stac_catalog, f, indent=2)
+        for item in stac_items:
+            json.dump(item, f, separators=(',', ':'))
+            f.write('\n')
 
     print(f"\n✅ Successfully generated {len(stac_items)} STAC Items for datacubes.")
     print(f"Output saved to: {os.path.abspath(output_filename)}")

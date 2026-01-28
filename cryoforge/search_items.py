@@ -2,6 +2,8 @@ import sys
 import re
 import json
 import logging
+import time
+from functools import wraps
 import xarray as xr
 from pyproj import Transformer
 from pystac_client import Client
@@ -13,6 +15,16 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+# Separate logger for profiling that goes to stderr
+profiling_logger = logging.getLogger("profile")
+profiling_logger.propagate = False  # Don't propagate to root logger
+profiling_logger.setLevel(logging.INFO)
+# Only add handler if not already present
+if not profiling_logger.handlers:
+    handler = logging.StreamHandler(sys.stderr)
+    handler.setFormatter(logging.Formatter("📊 PROFILE: %(message)s"))
+    profiling_logger.addHandler(handler)
 
 DEFAULT_CATALOGS = {
     "stac": "https://stac.itslive.cloud",
@@ -102,6 +114,21 @@ def parse_op_value(raw_value):
     return op, val
 
 
+def timed(prefix: str = ""):
+    """Decorator to time function execution and log to stderr."""
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            start = time.perf_counter()
+            result = func(*args, **kwargs)
+            elapsed = time.perf_counter() - start
+            profiling_logger.info(f"{prefix}{func.__name__}: {elapsed:.2f}s")
+            return result
+        return wrapper
+    return decorator
+
+
+@timed("duckstac_search: ")
 def search_duckstac(catalog: str, args: dict):
     filters = []
 
@@ -173,6 +200,8 @@ def search_duckstac(catalog: str, args: dict):
         partition_type="h3",
         resolution=2,
         overlap="bbox_overlap",
+        verify=not args.get("no_verify", False),  # --no-verify means verify=False
+        verbose=args.get("verbose", False),
     )
 
 
@@ -223,6 +252,7 @@ def search_rustac(catalog: str, args: dict):
 @click.option("--scene-2-path-row")
 @click.option("--platform")
 @click.option("--verbose", is_flag=True, help="Enable verbose logging.", default=False)
+@click.option("--no-verify", is_flag=True, help="Skip S3 path verification during grid pruning (faster).", default=False)
 def search_items(**kwargs):
     """Search STAC or DuckSTAC catalogs using rich-click."""
     args = dict(kwargs)

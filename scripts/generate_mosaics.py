@@ -248,12 +248,12 @@ def generate_stac_items_cli(input_filename: str, output_filename: str):
 
             # For static mosaics, use end date as datetime; for annual, use start date
             if temporal_type == "static":
-                datetime_str = end_dt.isoformat() + "Z"
+                datetime_str = end_dt.isoformat() + "+00:00"
             else:
-                datetime_str = start_dt.isoformat() + "Z"
+                datetime_str = start_dt.isoformat() + "+00:00"
             
-            start_datetime_str = start_dt.isoformat() + "Z"
-            end_datetime_str = end_dt.isoformat() + "T23:59:59Z"
+            start_datetime_str = start_dt.isoformat() + "+00:00"
+            end_datetime_str = end_dt.isoformat() + "T23:59:59+00:00"
         except ValueError:
             datetime_str = None
             start_datetime_str = None
@@ -304,7 +304,16 @@ def generate_stac_items_cli(input_filename: str, output_filename: str):
             "stac_version": "1.1.0",
             "collection": collection_id,
             "bbox": feature["bbox"],
-            "geometry": feature.get("geometry", None),
+            "geometry": feature.get("geometry", {
+                "type": "Polygon",
+                "coordinates": [[
+                    [feature["bbox"][0], feature["bbox"][1]],
+                    [feature["bbox"][2], feature["bbox"][1]],
+                    [feature["bbox"][2], feature["bbox"][3]],
+                    [feature["bbox"][0], feature["bbox"][3]],
+                    [feature["bbox"][0], feature["bbox"][1]]
+                ]]
+            }),
             "properties": {
                 "datetime": datetime_str,
                 "start_datetime": start_datetime_str,
@@ -329,11 +338,11 @@ def generate_stac_items_cli(input_filename: str, output_filename: str):
         }
         stac_items.append(stac_item)
 
-    # Wrap in a FeatureCollection and save
-    stac_catalog = {"type": "FeatureCollection", "features": stac_items}
-
+    # Save as NDJSON (newline-delimited JSON)
     with open(output_filename, "w") as f:
-        json.dump(stac_catalog, f, indent=2)
+        for item in stac_items:
+            json.dump(item, f, separators=(',', ':'))
+            f.write('\n')
 
     print(f"\n✅ Successfully generated {len(stac_items)} STAC Items.")
     print(f"Output saved to: {os.path.abspath(output_filename)}")
